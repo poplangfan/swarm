@@ -1,7 +1,7 @@
 """Tests for message bus."""
 
 import pytest
-from swarm.bus.queue import MessageBus, InboundMessage, OutboundMessage
+from bus.queue import MessageBus, InboundMessage, OutboundMessage
 
 
 def make_msg(chat_id: str, content: str = "hello") -> InboundMessage:

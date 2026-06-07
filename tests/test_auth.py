@@ -1,7 +1,7 @@
 """Tests for auth system — token storage and encryption."""
 
 import pytest
-from swarm.auth.token_store import TokenStore, TokenData
+from auth.token_store import TokenStore, TokenData
 
 
 class TestTokenStore:

@@ -4,11 +4,11 @@ import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from swarm.agent.context import RequestContext
-from swarm.agent.runner import AgentRunner, AgentRunSpec, AgentRunResult
-from swarm.agent.loop import AgentLoop, TurnState
-from swarm.bus.queue import MessageBus
-from swarm.providers.base import LLMResponse
+from agent.context import RequestContext
+from agent.runner import AgentRunner, AgentRunSpec, AgentRunResult
+from agent.loop import AgentLoop, TurnState
+from bus.queue import MessageBus
+from providers.base import LLMResponse
 
 
 class TestRequestContext:

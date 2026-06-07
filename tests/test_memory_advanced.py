@@ -2,8 +2,8 @@
 
 import pytest
 from pathlib import Path
-from swarm.memory.compressor import ContextCompressor
-from swarm.memory.knowledge_graph import KnowledgeGraph, Entity, Relation
+from memory.compressor import ContextCompressor
+from memory.knowledge_graph import KnowledgeGraph, Entity, Relation
 
 
 class TestContextCompressor:

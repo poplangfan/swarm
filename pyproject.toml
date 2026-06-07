@@ -48,7 +48,7 @@ dev = [
 ]
 
 [project.scripts]
-swarm = "swarm.cli.main:app"
+swarm = "cli.main:app"
 
 [project.entry-points."swarm.plugins"]
 
@@ -68,5 +68,10 @@ markers = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["swarm"]
+packages = [
+    "agent", "auth", "bus", "cli", "config", "cron", "delivery",
+    "events", "gateway", "logging_", "mcp", "memory", "plugins",
+    "providers", "session", "skills", "state", "tools", "utils",
+    "version",
+]
 force-include = { "skills_builtin" = "swarm_skills_builtin" }

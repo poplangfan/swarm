@@ -1,7 +1,7 @@
 """Tests for tool schema generation and validation."""
 
 import pytest
-from swarm.tools.schema import generate_tool_schema, validate_tool_args
+from tools.schema import generate_tool_schema, validate_tool_args
 
 
 class TestGenerateToolSchema:

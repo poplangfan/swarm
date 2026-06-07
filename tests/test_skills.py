@@ -2,7 +2,7 @@
 
 import tempfile
 from pathlib import Path
-from swarm.skills.loader import SkillsLoader, Skill
+from skills.loader import SkillsLoader, Skill
 
 
 class TestSkillsLoader:

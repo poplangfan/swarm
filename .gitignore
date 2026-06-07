@@ -43,3 +43,8 @@ htmlcov/
 *.swp
 *.swo
 *~
+# Claude Code / IDE session data
+.claude/
+.opencode/
+.superpowers/
+.agents/

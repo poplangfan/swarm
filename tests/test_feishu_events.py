@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from swarm.gateway.feishu_events import (
+from gateway.feishu_events import (
     FeishuEventDispatcher, extract_message_data,
     extract_reaction_data, extract_member_event_data,
 )

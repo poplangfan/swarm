@@ -5,9 +5,9 @@ import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
-from swarm.bus.queue import MessageBus
-from swarm.agent.context import RequestContext
-from swarm.providers.base import LLMResponse
+from bus.queue import MessageBus
+from agent.context import RequestContext
+from providers.base import LLMResponse
 
 
 @pytest.fixture

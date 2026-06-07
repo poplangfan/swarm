@@ -2,9 +2,9 @@
 
 import json
 import pytest
-from swarm.agent.context import RequestContext
-from swarm.bus.queue import InboundMessage, OutboundMessage
-from swarm.agent.runner import AgentRunSpec, AgentRunResult
+from agent.context import RequestContext
+from bus.queue import InboundMessage, OutboundMessage
+from agent.runner import AgentRunSpec, AgentRunResult
 
 
 class TestRequestContextImmutability:

@@ -2,8 +2,8 @@
 
 import pytest
 from pydantic import ValidationError
-from swarm.config.schema import LLMConfig, FeishuConfig, SwarmConfig
-from swarm.config.loader import _resolve_env_vars, load_config
+from config.schema import LLMConfig, FeishuConfig, SwarmConfig
+from config.loader import _resolve_env_vars, load_config
 
 
 class TestLLMConfig:

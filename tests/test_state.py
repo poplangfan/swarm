@@ -3,9 +3,9 @@
 import json
 import pytest
 from pathlib import Path
-from swarm.state.store import StateStore
-from swarm.state.snapshot import StateSnapshot
-from swarm.state.migration import StateMigrator
+from state.store import StateStore
+from state.snapshot import StateSnapshot
+from state.migration import StateMigrator
 
 
 class TestStateStore:

@@ -1,7 +1,7 @@
 """Example custom tool for Swarm."""
 
-from swarm.tools.base import ToolBase, tool_result
-from swarm.agent.context import RequestContext
+from tools.base import ToolBase, tool_result
+from agent.context import RequestContext
 
 
 class WeatherTool(ToolBase):

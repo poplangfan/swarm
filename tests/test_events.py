@@ -1,7 +1,7 @@
 """Tests for events system."""
 
 import pytest
-from swarm.events.bus import EventBus, Event, EventType
+from events.bus import EventBus, Event, EventType
 
 
 class TestEventBus:

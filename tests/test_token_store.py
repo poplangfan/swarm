@@ -6,10 +6,10 @@ import time
 from pathlib import Path
 from unittest.mock import AsyncMock, patch, MagicMock
 
-from swarm.auth.token_store import TokenStore, TokenData
-from swarm.auth.oauth import FeishuOAuth
-from swarm.auth.middleware import inject_user_token, check_authorization
-from swarm.agent.context import RequestContext
+from auth.token_store import TokenStore, TokenData
+from auth.oauth import FeishuOAuth
+from auth.middleware import inject_user_token, check_authorization
+from agent.context import RequestContext
 
 
 class TestTokenStoreEncryption:

@@ -1,7 +1,7 @@
 """Tests for session manager — per-chat_id isolation."""
 
 import pytest
-from swarm.session.manager import Session, SessionManager
+from session.manager import Session, SessionManager
 
 
 class TestSession:

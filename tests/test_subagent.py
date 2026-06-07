@@ -3,8 +3,8 @@
 import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from swarm.agent.subagent import SubagentManager, SubagentSpec, SubagentResult
-from swarm.providers.base import LLMResponse
+from agent.subagent import SubagentManager, SubagentSpec, SubagentResult
+from providers.base import LLMResponse
 
 
 class TestSubagentManager:

@@ -5,7 +5,7 @@ import pytest
 import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
-from swarm.memory.recall import MemoryRecall
+from memory.recall import MemoryRecall
 
 
 class TestMemoryRecall:

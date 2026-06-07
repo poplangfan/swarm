@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-from swarm.gateway.feishu_streaming import CardKitStreamer, _StreamBuffer
+from gateway.feishu_streaming import CardKitStreamer, _StreamBuffer
 
 
 class TestStreamBuffer:

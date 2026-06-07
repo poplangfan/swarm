@@ -1,9 +1,9 @@
 """Tests for tools system."""
 
 import pytest
-from swarm.tools.base import tool_result, ToolBase
-from swarm.tools.registry import ToolRegistry
-from swarm.agent.context import RequestContext
+from tools.base import tool_result, ToolBase
+from tools.registry import ToolRegistry
+from agent.context import RequestContext
 
 
 class EchoTool(ToolBase):

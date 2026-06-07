@@ -1,7 +1,7 @@
 """Tests for feishu message parser."""
 
 import json
-from swarm.gateway.feishu_message import parse_message_content
+from gateway.feishu_message import parse_message_content
 
 
 class TestMessageParser:

@@ -3,10 +3,10 @@
 import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from swarm.bus.queue import MessageBus
-from swarm.agent.loop import AgentLoop
-from swarm.session.manager import SessionManager
-from swarm.providers.base import LLMResponse
+from bus.queue import MessageBus
+from agent.loop import AgentLoop
+from session.manager import SessionManager
+from providers.base import LLMResponse
 
 
 class TestConcurrencySafety:
@@ -109,7 +109,7 @@ class TestConcurrencySafety:
     @pytest.mark.asyncio
     async def test_chroma_isolation_by_chat_id(self, temp_dir):
         """ChromaDB writes have correct chat_id metadata — no cross-contamination."""
-        from swarm.memory.short_term import ShortTermMemory
+        from memory.short_term import ShortTermMemory
 
         store = ShortTermMemory(temp_dir)
 

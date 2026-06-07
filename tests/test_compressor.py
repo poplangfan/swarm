@@ -1,7 +1,7 @@
 """Detailed tests for context compressor."""
 
 import pytest
-from swarm.memory.compressor import ContextCompressor
+from memory.compressor import ContextCompressor
 
 
 class TestCompressorEdgeCases:

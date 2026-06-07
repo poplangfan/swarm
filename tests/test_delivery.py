@@ -3,8 +3,8 @@
 import asyncio
 import pytest
 from unittest.mock import AsyncMock
-from swarm.bus.queue import OutboundMessage
-from swarm.delivery.delivery import Delivery, DeliveryConfig
+from bus.queue import OutboundMessage
+from delivery.delivery import Delivery, DeliveryConfig
 
 
 class TestDelivery:

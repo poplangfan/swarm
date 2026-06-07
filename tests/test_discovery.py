@@ -1,14 +1,14 @@
 """Tests for tool auto-discovery system."""
 
 import pytest
-from swarm.tools.discovery import discover_builtin_tools, load_all_tools
-from swarm.tools.registry import ToolRegistry
-from swarm.tools.base import ToolBase
+from tools.discovery import discover_builtin_tools, load_all_tools
+from tools.registry import ToolRegistry
+from tools.base import ToolBase
 
 
 class TestDiscovery:
     def test_discovers_builtin_tools(self):
-        tools = discover_builtin_tools("swarm.tools.builtin")
+        tools = discover_builtin_tools("tools.builtin")
         tool_names = [t.name for t in tools]
         # Should find at least some built-in tool classes
         assert len(tools) >= 1
@@ -29,7 +29,7 @@ class TestDiscovery:
             assert tool.name == name
 
     def test_discover_nonexistent_package(self):
-        tools = discover_builtin_tools("swarm.tools.nonexistent")
+        tools = discover_builtin_tools("tools.nonexistent")
         assert len(tools) == 0
 
 

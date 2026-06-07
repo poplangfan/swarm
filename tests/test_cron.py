@@ -3,9 +3,9 @@
 import pytest
 import time
 from pathlib import Path
-from swarm.cron.scheduler import CronScheduler
-from swarm.cron.store import CronStore
-from swarm.cron.parser import CronParser
+from cron.scheduler import CronScheduler
+from cron.store import CronStore
+from cron.parser import CronParser
 
 
 class TestCronParser:

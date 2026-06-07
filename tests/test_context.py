@@ -3,7 +3,7 @@
 import pytest
 from pathlib import Path
 from unittest.mock import MagicMock
-from swarm.agent.context import ContextBuilder, RequestContext
+from agent.context import ContextBuilder, RequestContext
 
 
 class TestContextBuilder:

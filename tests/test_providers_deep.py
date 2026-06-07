@@ -4,12 +4,12 @@ import asyncio
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from swarm.providers.base import LLMResponse, StreamChunk
-from swarm.providers.retry import RetryConfig, async_retry
-from swarm.providers.fallback import FallbackProvider
-from swarm.providers.token_counter import TokenCounter
-from swarm.providers.factory import make_provider
-from swarm.config.schema import LLMConfig
+from providers.base import LLMResponse, StreamChunk
+from providers.retry import RetryConfig, async_retry
+from providers.fallback import FallbackProvider
+from providers.token_counter import TokenCounter
+from providers.factory import make_provider
+from config.schema import LLMConfig
 
 
 class TestRetryMechanism:
@@ -155,14 +155,14 @@ class TestMakeProvider:
         config = LLMConfig(provider="openai", api_key="sk-test",
                           base_url="https://api.openai.com/v1")
         # Import after clearing env
-        from swarm.providers.openai_compat import OpenAICompatProvider
+        from providers.openai_compat import OpenAICompatProvider
         provider = make_provider(config)
         assert isinstance(provider, OpenAICompatProvider)
 
     def test_creates_anthropic_provider(self):
         config = LLMConfig(provider="anthropic", api_key="sk-test",
                           base_url="https://api.deepseek.com/anthropic")
-        from swarm.providers.anthropic import AnthropicProvider
+        from providers.anthropic import AnthropicProvider
         provider = make_provider(config)
         assert isinstance(provider, AnthropicProvider)
 
@@ -173,7 +173,7 @@ class TestMakeProvider:
                 os.environ.pop(k, None)
         config = LLMConfig(provider="custom", api_key="sk-test",
                           base_url="http://localhost:8000/v1")
-        from swarm.providers.openai_compat import OpenAICompatProvider
+        from providers.openai_compat import OpenAICompatProvider
         provider = make_provider(config)
         assert isinstance(provider, OpenAICompatProvider)
 

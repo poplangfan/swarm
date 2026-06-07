@@ -4,8 +4,8 @@ import json
 import pytest
 import tempfile
 from pathlib import Path
-from swarm.plugins.protocol import PluginManifest, PluginState
-from swarm.plugins.loader import PluginLoader
+from plugins.protocol import PluginManifest, PluginState
+from plugins.loader import PluginLoader
 
 
 class TestPluginManifest:

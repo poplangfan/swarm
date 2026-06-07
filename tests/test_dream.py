@@ -2,10 +2,10 @@
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from swarm.memory.dream import DreamConsolidator
-from swarm.memory.store import ChromaMemoryStore
-from swarm.memory.short_term import ShortTermMemory
-from swarm.providers.base import LLMResponse
+from memory.dream import DreamConsolidator
+from memory.store import ChromaMemoryStore
+from memory.short_term import ShortTermMemory
+from providers.base import LLMResponse
 
 
 class TestDreamConsolidator:

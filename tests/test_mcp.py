@@ -2,10 +2,10 @@
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from swarm.mcp.client import MCPClient, _MCPToolBridge
-from swarm.mcp.server import SwarmMCPServer
-from swarm.tools.registry import ToolRegistry
-from swarm.tools.base import ToolBase
+from mcp.client import MCPClient, _MCPToolBridge
+from mcp.server import SwarmMCPServer
+from tools.registry import ToolRegistry
+from tools.base import ToolBase
 
 
 class TestMCPToolBridge:

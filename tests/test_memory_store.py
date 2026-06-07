@@ -3,8 +3,8 @@
 import pytest
 import tempfile
 from pathlib import Path
-from swarm.memory.store import ChromaMemoryStore
-from swarm.memory.short_term import ShortTermMemory
+from memory.store import ChromaMemoryStore
+from memory.short_term import ShortTermMemory
 
 
 class TestChromaMemoryStore:

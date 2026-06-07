@@ -13,17 +13,17 @@ from pathlib import Path
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 
-from swarm.agent.context import ContextBuilder
-from swarm.bus.queue import MessageBus, InboundMessage
-from swarm.agent.loop import AgentLoop
-from swarm.session.manager import SessionManager
-from swarm.tools.registry import ToolRegistry
-from swarm.tools.builtin.system import SystemTool
-from swarm.tools.builtin.web_search import WebSearchTool
-from swarm.agent.runner import AgentRunner, AgentRunSpec
-from swarm.providers.anthropic import AnthropicProvider
-from swarm.providers.base import LLMResponse, StreamChunk
-from swarm.tools.base import ToolBase, tool_result
+from agent.context import ContextBuilder
+from bus.queue import MessageBus, InboundMessage
+from agent.loop import AgentLoop
+from session.manager import SessionManager
+from tools.registry import ToolRegistry
+from tools.builtin.system import SystemTool
+from tools.builtin.web_search import WebSearchTool
+from agent.runner import AgentRunner, AgentRunSpec
+from providers.anthropic import AnthropicProvider
+from providers.base import LLMResponse, StreamChunk
+from tools.base import ToolBase, tool_result
 
 
 # ── Real LLM helpers ────────────────────────────────────────────

@@ -1,7 +1,7 @@
 """Tests for tool permission system."""
 
 import pytest
-from swarm.tools.permission import Permission, PermissionSet
+from tools.permission import Permission, PermissionSet
 
 
 class TestPermissionSet:
@@ -38,7 +38,7 @@ class TestPermissionSet:
         assert not ps.has("d")
 
     def test_default_permissions_exist(self):
-        from swarm.tools.permission import DEFAULT_PERMISSIONS
+        from tools.permission import DEFAULT_PERMISSIONS
         assert "user" in DEFAULT_PERMISSIONS
         assert "admin" in DEFAULT_PERMISSIONS
         user_perms = DEFAULT_PERMISSIONS["user"]
