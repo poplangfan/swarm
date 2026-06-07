@@ -41,25 +41,32 @@ Swarm 的项目结构和核心设计参考了两个优秀的 AI Agent 项目：
 
 ## 快速开始
 
-**方式一：PyPI 安装**
-
 ```bash
-pip install swarm-agent
-swarm init
-# 编辑 config.yaml 填入凭证
-swarm chat     # CLI 模式测试
-swarm ws       # 启动飞书机器人
-```
-
-**方式二：GitHub 源码安装**
-
-```bash
-git clone https://github.com/poplangfan/swarm.git
-cd swarm
+git clone https://github.com/poplangfan/swarm.git ~/.swarm
+cd ~/.swarm
 pip install -e .
 swarm init
+# 编辑 ~/.swarm/config.yaml 填入凭证
 swarm chat
 ```
+
+安装后 `~/.swarm/` 包含完整源码 + 所有数据：
+
+```
+~/.swarm/
+├── agent/            # 源代码
+├── gateway/          # 源代码
+├── tools/            # 源代码
+├── cli/              # 源代码
+├── ...               # 其他模块
+├── config.yaml       # 配置文件
+├── sessions.db       # 会话数据
+├── chroma/           # 长期记忆
+├── logs/             # 日志
+└── skills/           # 自定义技能
+```
+
+> 也可以从 PyPI 安装：`pip install swarm-agent && swarm init`（不含源码，仅 CLI + 数据目录）
 
 ```yaml
 # config.yaml
@@ -223,25 +230,18 @@ Swarm's project structure and core design draw inspiration from two excellent AI
 
 ## Quick Start
 
-**Option 1: Install from PyPI**
-
 ```bash
-pip install swarm-agent
-swarm init
-# Edit config.yaml with your credentials
-swarm chat     # Test in CLI
-swarm ws       # Start Feishu bot
-```
-
-**Option 2: Install from GitHub**
-
-```bash
-git clone https://github.com/poplangfan/swarm.git
-cd swarm
+git clone https://github.com/poplangfan/swarm.git ~/.swarm
+cd ~/.swarm
 pip install -e .
 swarm init
+# Edit ~/.swarm/config.yaml with your credentials
 swarm chat
 ```
+
+After setup, `~/.swarm/` contains both full source code and all data.
+
+> Also available via PyPI: `pip install swarm-agent && swarm init` (CLI-only, no source code)
 
 ```yaml
 # config.yaml
