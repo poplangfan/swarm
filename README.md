@@ -23,6 +23,13 @@
 
 **Swarm** 是一个轻量级、并发安全的多租户飞书 AI Agent 框架。提供简洁的 Agent 循环加上生产环境所需组件：WebSocket 长连接、记忆系统、工具系统、用户 OAuth 权限、定时任务和完善的日志系统。
 
+## 借鉴与致谢
+
+Swarm 的项目结构和核心设计参考了两个优秀的 AI Agent 项目：
+
+- **[nanobot](https://github.com/nanobot)** — Agent 循环、工具系统、消息总线的设计灵感
+- **[hermes-agent](https://github.com/NousResearch/hermes-agent)** — 扁平化项目结构、插件协议、技能系统
+
 ## 为什么选择 Swarm
 
 - **多租户隔离** — 基于 `chat_id` 的完全隔离，存储、运行时、权限三层防护
@@ -34,12 +41,24 @@
 
 ## 快速开始
 
+**方式一：PyPI 安装**
+
 ```bash
 pip install swarm-agent
 swarm init
 # 编辑 config.yaml 填入凭证
 swarm chat     # CLI 模式测试
 swarm ws       # 启动飞书机器人
+```
+
+**方式二：GitHub 源码安装**
+
+```bash
+git clone https://github.com/poplangfan/swarm.git
+cd swarm
+pip install -e .
+swarm init
+swarm chat
 ```
 
 ```yaml
@@ -146,11 +165,14 @@ swarm/
 ├── mcp/           # MCP 客户端 + 服务端
 ├── plugins/       # 清单协议, 加载器
 ├── skills/        # Markdown skills 加载器
+├── skills_builtin/ # 10 个内置技能
 ├── delivery/      # 出站队列, 限流, 重试
 ├── state/         # 持久化状态, 快照, 迁移
 ├── cli/           # Typer + Rich + prompt_toolkit
 ├── bus/           # 异步消息总线
 ├── config/        # Pydantic v2 schema + YAML 加载器
+├── docker/        # Dockerfile + Compose
+├── tests/         # 315 单元/集成测试
 └── logging_/      # structlog + 轮转 + 压缩 + 审计
 ```
 
@@ -183,6 +205,13 @@ MIT License — 详见 [LICENSE](LICENSE)
 
 **Swarm** is a lightweight, concurrency-safe, multi-tenant Feishu AI Agent framework. It provides a clean agent loop with production-ready components: WebSocket long connection, memory system, tool system, user OAuth permissions, cron scheduler, and comprehensive logging.
 
+## Acknowledgments
+
+Swarm's project structure and core design draw inspiration from two excellent AI agent projects:
+
+- **[nanobot](https://github.com/nanobot)** — Agent loop, tool system, and message bus design
+- **[hermes-agent](https://github.com/NousResearch/hermes-agent)** — Flat project structure, plugin protocol, and skill system
+
 ## Why Swarm
 
 - **Multi-tenant isolation** — `chat_id`-based isolation at storage, runtime, and auth layers
@@ -194,12 +223,24 @@ MIT License — 详见 [LICENSE](LICENSE)
 
 ## Quick Start
 
+**Option 1: Install from PyPI**
+
 ```bash
 pip install swarm-agent
 swarm init
 # Edit config.yaml with your credentials
 swarm chat     # Test in CLI
 swarm ws       # Start Feishu bot
+```
+
+**Option 2: Install from GitHub**
+
+```bash
+git clone https://github.com/poplangfan/swarm.git
+cd swarm
+pip install -e .
+swarm init
+swarm chat
 ```
 
 ```yaml
@@ -306,12 +347,16 @@ swarm/
 ├── mcp/           # MCP client + server
 ├── plugins/       # Manifest protocol, Loader
 ├── skills/        # Markdown skills loader
+├── skills_builtin/ # 10 built-in skills
 ├── delivery/      # Outbound queuing, rate limiting, retry
 ├── state/         # Persistent state, snapshots, migration
 ├── cli/           # Typer + Rich + prompt_toolkit
 ├── bus/           # Async message bus
 ├── config/        # Pydantic v2 schema + YAML loader
+├── docker/        # Dockerfile + Compose
+├── tests/         # 315 unit/integration tests
 └── logging_/      # structlog + rotation + compression + audit
+```
 ```
 
 ## Documentation
