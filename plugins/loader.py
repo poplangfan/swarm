@@ -54,6 +54,7 @@ class PluginLoader:
         discovered = []
         try:
             from importlib.metadata import entry_points
+
             for ep in entry_points(group=group):
                 try:
                     factory = ep.load()
@@ -77,16 +78,23 @@ class PluginLoader:
         if pip_deps:
             try:
                 proc = await asyncio.create_subprocess_exec(
-                    sys.executable, "-m", "pip", "install", *pip_deps,
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    *pip_deps,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
                 stdout, stderr = await proc.communicate()
                 if proc.returncode != 0:
                     stderr_text = stderr.decode() if stderr else ""
-                    logger.error("plugin_install_failed", name=name,
-                                 returncode=proc.returncode,
-                                 stderr=stderr_text[:500])
+                    logger.error(
+                        "plugin_install_failed",
+                        name=name,
+                        returncode=proc.returncode,
+                        stderr=stderr_text[:500],
+                    )
                     manifest.state = PluginState.ERROR
                     return False
             except Exception as e:

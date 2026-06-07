@@ -25,9 +25,7 @@ class FeishuTokenManager:
         self._app_id = app_id
         self._app_secret = app_secret
         self._base = (
-            "https://open.feishu.cn"
-            if domain == "feishu"
-            else "https://open.larksuite.com"
+            "https://open.feishu.cn" if domain == "feishu" else "https://open.larksuite.com"
         )
         self._token: str | None = None
         self._expires: float = 0

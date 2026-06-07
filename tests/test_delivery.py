@@ -1,8 +1,10 @@
 """Tests for delivery layer — queuing, rate limiting, retry."""
 
 import asyncio
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
+
 from bus.queue import OutboundMessage
 from delivery.delivery import Delivery, DeliveryConfig
 
@@ -16,9 +18,14 @@ class TestDelivery:
             sent.append(msg)
             return "ok"
 
-        delivery = Delivery(send_fn=mock_send, config=DeliveryConfig(
-            max_retries=1, base_delay=0.01, rate_limit_per_second=1000,
-        ))
+        delivery = Delivery(
+            send_fn=mock_send,
+            config=DeliveryConfig(
+                max_retries=1,
+                base_delay=0.01,
+                rate_limit_per_second=1000,
+            ),
+        )
         msg = OutboundMessage(channel="feishu", chat_id="chat1", content="hello")
         ok = await delivery.send(msg)
         assert ok
@@ -38,9 +45,14 @@ class TestDelivery:
                 raise ConnectionError("temporary error")
             return "ok"
 
-        delivery = Delivery(send_fn=flaky_send, config=DeliveryConfig(
-            max_retries=3, base_delay=0.01, rate_limit_per_second=1000,
-        ))
+        delivery = Delivery(
+            send_fn=flaky_send,
+            config=DeliveryConfig(
+                max_retries=3,
+                base_delay=0.01,
+                rate_limit_per_second=1000,
+            ),
+        )
         msg = OutboundMessage(channel="feishu", chat_id="chat1", content="test")
         await delivery.send(msg)
         await asyncio.sleep(0.3)
@@ -54,9 +66,14 @@ class TestDelivery:
             order.append(msg.content)
             return "ok"
 
-        delivery = Delivery(send_fn=record_send, config=DeliveryConfig(
-            max_retries=1, base_delay=0.01, rate_limit_per_second=1000,
-        ))
+        delivery = Delivery(
+            send_fn=record_send,
+            config=DeliveryConfig(
+                max_retries=1,
+                base_delay=0.01,
+                rate_limit_per_second=1000,
+            ),
+        )
         for i in range(5):
             msg = OutboundMessage(channel="feishu", chat_id="chat1", content=f"msg_{i}")
             await delivery.send(msg)

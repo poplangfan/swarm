@@ -17,9 +17,9 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
+from contextlib import nullcontext
+from dataclasses import dataclass
 from datetime import datetime
-from contextlib import nullcontext, suppress
-from dataclasses import dataclass, field
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Callable
@@ -43,17 +43,19 @@ _ERR_MESSAGE = "Sorry, I encountered an error processing your message."
 
 class TurnState(Enum):
     """States in the agent processing state machine."""
-    RESTORE = auto()   # Load session, restore any checkpoint
-    BUILD = auto()     # Assemble system prompt + context
-    RUN = auto()       # LLM call + tool execution loop
-    SAVE = auto()      # Persist session and trigger memory consolidation
-    RESPOND = auto()   # Send outbound message
-    DONE = auto()      # Turn complete, return to event loop
+
+    RESTORE = auto()  # Load session, restore any checkpoint
+    BUILD = auto()  # Assemble system prompt + context
+    RUN = auto()  # LLM call + tool execution loop
+    SAVE = auto()  # Persist session and trigger memory consolidation
+    RESPOND = auto()  # Send outbound message
+    DONE = auto()  # Turn complete, return to event loop
 
 
 @dataclass
 class StateTraceEntry:
     """Diagnostic record of a single state transition."""
+
     state: TurnState
     started_at: float
     duration_ms: float
@@ -88,19 +90,19 @@ class AgentLoop:
 
     # State transition table: (current_state, event) → next_state
     _TRANSITIONS: dict[tuple[TurnState, str], TurnState] = {
-        (TurnState.RESTORE, "ok"):  TurnState.BUILD,
-        (TurnState.BUILD,   "ok"):  TurnState.RUN,
-        (TurnState.BUILD,   "cmd"): TurnState.RESPOND,  # Command shortcut
-        (TurnState.RUN,     "ok"):  TurnState.SAVE,
-        (TurnState.SAVE,    "ok"):  TurnState.RESPOND,
-        (TurnState.RESPOND, "ok"):  TurnState.DONE,
+        (TurnState.RESTORE, "ok"): TurnState.BUILD,
+        (TurnState.BUILD, "ok"): TurnState.RUN,
+        (TurnState.BUILD, "cmd"): TurnState.RESPOND,  # Command shortcut
+        (TurnState.RUN, "ok"): TurnState.SAVE,
+        (TurnState.SAVE, "ok"): TurnState.RESPOND,
+        (TurnState.RESPOND, "ok"): TurnState.DONE,
     }
 
     # Configuration defaults
-    _MAX_CONCURRENT = 10          # Max simultaneous turns across all sessions
-    _PENDING_QUEUE_SIZE = 20      # Max queued messages per active session
+    _MAX_CONCURRENT = 10  # Max simultaneous turns across all sessions
+    _PENDING_QUEUE_SIZE = 20  # Max queued messages per active session
     _MAX_INJECTIONS_PER_TURN = 5  # Max mid-turn message injections per turn
-    _SHUTDOWN_TIMEOUT = 30.0      # Seconds to drain in-flight turns on shutdown
+    _SHUTDOWN_TIMEOUT = 30.0  # Seconds to drain in-flight turns on shutdown
 
     # Session metadata keys
     _CHECKPOINT_KEY = "runtime_checkpoint"
@@ -145,6 +147,7 @@ class AgentLoop:
         self._skills_loader = None
         try:
             from skills.loader import SkillsLoader
+
             # Load built-in skills from project root
             builtin_path = Path(__file__).parent.parent / "skills_builtin"
             if builtin_path.exists():
@@ -166,15 +169,19 @@ class AgentLoop:
 
         # Context building (with skills injected into prompts)
         self.context_builder = context_builder or ContextBuilder(
-            workspace=self.workspace, timezone=timezone, memory=memory,
+            workspace=self.workspace,
+            timezone=timezone,
+            memory=memory,
             skills_loader=self._skills_loader,
         )
 
         # Sub-components
         self.runner = AgentRunner(provider)
         self.subagents = SubagentManager(
-            provider=provider, workspace=self.workspace,
-            max_concurrent=max_concurrent_subagents, timeout=300.0,
+            provider=provider,
+            workspace=self.workspace,
+            max_concurrent=max_concurrent_subagents,
+            timeout=300.0,
         )
 
         # Concurrency control
@@ -186,8 +193,8 @@ class AgentLoop:
         self._background_tasks: list[asyncio.Task] = []
 
         # Token budget for session replay
-        ctx_window = getattr(provider, 'context_window', 128_000)
-        max_output = getattr(getattr(provider, 'generation', None), 'max_tokens', 4096)
+        ctx_window = getattr(provider, "context_window", 128_000)
+        max_output = getattr(getattr(provider, "generation", None), "max_tokens", 4096)
         self._replay_token_budget = max(128, ctx_window - max_output - 1024)
 
         # Command registry
@@ -317,9 +324,14 @@ class AgentLoop:
 
             # ── Trace ────────────────────────────────────────
             duration_ms = (time.perf_counter() - t0) * 1000
-            trace.append(StateTraceEntry(
-                state=state, started_at=t0, duration_ms=duration_ms, event=event,
-            ))
+            trace.append(
+                StateTraceEntry(
+                    state=state,
+                    started_at=t0,
+                    duration_ms=duration_ms,
+                    event=event,
+                )
+            )
 
             # ── Transition ───────────────────────────────────
             next_state = self._TRANSITIONS.get((state, event))
@@ -344,8 +356,11 @@ class AgentLoop:
     # ── State Handlers ───────────────────────────────────────
 
     async def _state_restore(
-        self, msg: InboundMessage, session_key: str,
-        turn: TurnContext, history: list[dict],
+        self,
+        msg: InboundMessage,
+        session_key: str,
+        turn: TurnContext,
+        history: list[dict],
     ) -> str:
         """RESTORE: Load session, recover from checkpoint if needed."""
         if not self.sessions:
@@ -373,8 +388,12 @@ class AgentLoop:
         return "ok"
 
     async def _state_build(
-        self, msg: InboundMessage, session_key: str,
-        ctx: RequestContext, turn: TurnContext, history: list[dict],
+        self,
+        msg: InboundMessage,
+        session_key: str,
+        ctx: RequestContext,
+        turn: TurnContext,
+        history: list[dict],
     ) -> str:
         """BUILD: Check for commands or assemble the LLM context."""
         # Check for command shortcut
@@ -431,12 +450,15 @@ class AgentLoop:
         return "ok"
 
     async def _state_run(
-        self, msg: InboundMessage, session_key: str,
+        self,
+        msg: InboundMessage,
+        session_key: str,
         turn: TurnContext,
         on_stream: Callable | None,
         on_stream_end: Callable | None,
     ) -> str:
         """RUN: Execute the LLM conversation loop with tools."""
+
         # Build injection callback for mid-turn messages
         async def _inject(limit: int = 3) -> list[dict]:
             injected = []
@@ -447,16 +469,17 @@ class AgentLoop:
             while count < limit:
                 try:
                     pending_msg = queue.get_nowait()
-                    injected.append({
-                        "role": "user",
-                        "content": f"[Follow-up]\n{pending_msg.content}",
-                    })
+                    injected.append(
+                        {
+                            "role": "user",
+                            "content": f"[Follow-up]\n{pending_msg.content}",
+                        }
+                    )
                     count += 1
                 except asyncio.QueueEmpty:
                     break
             if injected:
-                logger.debug("mid_turn_injection", count=len(injected),
-                            session_key=session_key)
+                logger.debug("mid_turn_injection", count=len(injected), session_key=session_key)
             return injected
 
         # Build checkpoint callback
@@ -503,7 +526,10 @@ class AgentLoop:
         return "ok"
 
     async def _state_save(
-        self, msg: InboundMessage, session_key: str, turn: TurnContext,
+        self,
+        msg: InboundMessage,
+        session_key: str,
+        turn: TurnContext,
     ) -> str:
         """SAVE: Persist the conversation turn and trigger memory consolidation."""
         if not self.sessions:
@@ -527,24 +553,23 @@ class AgentLoop:
             await self.sessions.save(s)
 
             # Trigger background memory storage + consolidation
-            if self.memory and hasattr(self.memory, 'add'):
+            if self.memory and hasattr(self.memory, "add"):
                 self._schedule_background(
-                    self._store_in_memory(msg.session_key,
-                                         msg.content,
-                                         turn.final_content or "")
+                    self._store_in_memory(msg.session_key, msg.content, turn.final_content or "")
                 )
             # Check if consolidation threshold reached and trigger Dream
-            self._schedule_background(
-                self._maybe_consolidate_memory(msg.session_key)
-            )
+            self._schedule_background(self._maybe_consolidate_memory(msg.session_key))
         except Exception as e:
             logger.error("session_save_failed", session_key=session_key, error=str(e))
 
         return "ok"
 
     async def _state_respond(
-        self, msg: InboundMessage, turn: TurnContext,
-        trace_id: str, latency_ms: int,
+        self,
+        msg: InboundMessage,
+        turn: TurnContext,
+        trace_id: str,
+        latency_ms: int,
     ) -> OutboundMessage | None:
         """RESPOND: Build and return the outbound message."""
         content = turn.final_content or ""
@@ -603,14 +628,16 @@ class AgentLoop:
             return False
 
         # Mark the interrupted turn
-        session.messages.append({
-            "role": "assistant",
-            "content": (
-                "I apologize — my previous response was interrupted. "
-                "Could you please repeat your last request?"
-            ),
-            "timestamp": datetime.now().isoformat(),
-        })
+        session.messages.append(
+            {
+                "role": "assistant",
+                "content": (
+                    "I apologize — my previous response was interrupted. "
+                    "Could you please repeat your last request?"
+                ),
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
         # Clean up checkpoint metadata
         session.metadata.pop(self._CHECKPOINT_KEY, None)
@@ -624,18 +651,23 @@ class AgentLoop:
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
     async def _store_in_memory(
-        self, session_key: str, user_msg: str, assistant_msg: str,
+        self,
+        session_key: str,
+        user_msg: str,
+        assistant_msg: str,
     ) -> None:
         """Store conversation turns in short-term memory for later consolidation."""
         if not self.memory:
             return
         try:
             chat_id = extract_chat_id(session_key)
-            if hasattr(self.memory, 'add'):
+            if hasattr(self.memory, "add"):
                 result = self.memory.add(chat_id, "user", user_msg[:500], role="user")
                 if asyncio.iscoroutine(result):
                     await result
-                result = self.memory.add(chat_id, "assistant", assistant_msg[:500], role="assistant")
+                result = self.memory.add(
+                    chat_id, "assistant", assistant_msg[:500], role="assistant"
+                )
                 if asyncio.iscoroutine(result):
                     await result
         except Exception as e:
@@ -643,7 +675,7 @@ class AgentLoop:
 
     async def _maybe_consolidate_memory(self, session_key: str) -> None:
         """Check if Dream consolidation threshold is met and trigger if so."""
-        if not self.memory or not hasattr(self.memory, 'count_since_consolidation'):
+        if not self.memory or not hasattr(self.memory, "count_since_consolidation"):
             return
         try:
             chat_id = extract_chat_id(session_key)
@@ -658,24 +690,29 @@ class AgentLoop:
             threshold = self._consolidation_threshold
 
             if count >= threshold:
-                logger.info("dream_consolidation_triggered",
-                           chat_id=chat_id, message_count=count)
+                logger.info("dream_consolidation_triggered", chat_id=chat_id, message_count=count)
                 dreamer = await self._get_dream_consolidator(threshold)
                 result = await dreamer.maybe_consolidate(chat_id)
-                logger.info("dream_consolidation_result",
-                           chat_id=chat_id, facts=result.get("facts_extracted", 0))
+                logger.info(
+                    "dream_consolidation_result",
+                    chat_id=chat_id,
+                    facts=result.get("facts_extracted", 0),
+                )
         except Exception as e:
             logger.debug("consolidation_skipped", session_key=session_key, error=str(e))
 
     async def _get_dream_consolidator(self, threshold: int):
         """Lazy-create and cache the DreamConsolidator (#9)."""
         if self._dream_consolidator is None:
+            from config.paths import chroma_dir
             from memory.dream import DreamConsolidator
             from memory.store import ChromaMemoryStore
-            from config.paths import chroma_dir
 
-            chroma = (self.memory if isinstance(self.memory, ChromaMemoryStore)
-                      else ChromaMemoryStore(chroma_dir()))
+            chroma = (
+                self.memory
+                if isinstance(self.memory, ChromaMemoryStore)
+                else ChromaMemoryStore(chroma_dir())
+            )
             self._dream_consolidator = DreamConsolidator(
                 chroma_store=chroma,
                 short_term=self.memory,
@@ -709,8 +746,7 @@ class AgentLoop:
                 if queue:
                     try:
                         queue.put_nowait(msg)
-                        logger.debug("message_routed_to_pending_queue",
-                                    session_key=session_key)
+                        logger.debug("message_routed_to_pending_queue", session_key=session_key)
                         return
                     except asyncio.QueueFull:
                         pass  # Fall through to normal dispatch
@@ -733,11 +769,13 @@ class AgentLoop:
             except Exception:
                 logger.exception("dispatch_error", session_key=session_key)
                 self._total_errors += 1
-                await self.bus.publish_outbound(OutboundMessage(
-                    channel=msg.channel,
-                    chat_id=msg.chat_id,
-                    content=_ERR_MESSAGE,
-                ))
+                await self.bus.publish_outbound(
+                    OutboundMessage(
+                        channel=msg.channel,
+                        chat_id=msg.chat_id,
+                        content=_ERR_MESSAGE,
+                    )
+                )
             finally:
                 # Clean up only OUR pending queue
                 if self._pending_queues.get(session_key) is pending:
@@ -753,8 +791,7 @@ class AgentLoop:
                     except asyncio.QueueEmpty:
                         break
                 if leftover:
-                    logger.info("pending_queue_drained",
-                               session_key=session_key, count=leftover)
+                    logger.info("pending_queue_drained", session_key=session_key, count=leftover)
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     # Main Event Loop
@@ -776,7 +813,8 @@ class AgentLoop:
         while self._running:
             try:
                 msg = await asyncio.wait_for(
-                    self.bus.consume_inbound(), timeout=1.0,
+                    self.bus.consume_inbound(),
+                    timeout=1.0,
                 )
             except asyncio.TimeoutError:
                 continue
@@ -797,9 +835,7 @@ class AgentLoop:
             task = asyncio.create_task(self._dispatch(msg))
             sk = msg.session_key
             self._active_tasks.setdefault(sk, []).append(task)
-            task.add_done_callback(
-                lambda t, k=sk: _safe_remove_task(self._active_tasks, k, t)
-            )
+            task.add_done_callback(lambda t, k=sk: _safe_remove_task(self._active_tasks, k, t))
 
     async def _dispatch_command_inline(self, msg: InboundMessage) -> None:
         """Handle a command message inline (fast path, no task spawn)."""
@@ -817,9 +853,13 @@ class AgentLoop:
         try:
             handler = self._commands[cmd]
             result = await handler(ctx)
-            await self.bus.publish_outbound(OutboundMessage(
-                channel=msg.channel, chat_id=msg.chat_id, content=result,
-            ))
+            await self.bus.publish_outbound(
+                OutboundMessage(
+                    channel=msg.channel,
+                    chat_id=msg.chat_id,
+                    content=result,
+                )
+            )
         except Exception as e:
             logger.error("inline_command_error", cmd=cmd, error=str(e))
 
@@ -850,10 +890,7 @@ class AgentLoop:
         self.stop()
 
         # Drain in-flight turns
-        all_tasks = [
-            t for ts in self._active_tasks.values()
-            for t in ts if not t.done()
-        ]
+        all_tasks = [t for ts in self._active_tasks.values() for t in ts if not t.done()]
         if all_tasks:
             logger.info("shutdown_draining_turns", count=len(all_tasks))
             try:
@@ -890,9 +927,11 @@ class AgentLoop:
         # Clean up per-session locks for inactive sessions
         self._session_locks.clear()
 
-        logger.info("agent_loop_shutdown_complete",
-                    total_turns=self._total_turns,
-                    total_errors=self._total_errors)
+        logger.info(
+            "agent_loop_shutdown_complete",
+            total_turns=self._total_turns,
+            total_errors=self._total_errors,
+        )
 
     def _schedule_background(self, coro) -> None:
         """Schedule a coroutine as a tracked background task.
@@ -902,10 +941,7 @@ class AgentLoop:
         task = asyncio.create_task(coro)
         self._background_tasks.append(task)
         task.add_done_callback(
-            lambda t: (
-                self._background_tasks.remove(t)
-                if t in self._background_tasks else None
-            )
+            lambda t: self._background_tasks.remove(t) if t in self._background_tasks else None
         )
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -945,7 +981,9 @@ class AgentLoop:
             return await self._process_message(msg, session_key)
 
     async def process_ephemeral(
-        self, content: str, tools: Any = None,
+        self,
+        content: str,
+        tools: Any = None,
     ) -> str:
         """Process a one-shot query without session persistence.
 
@@ -959,7 +997,6 @@ class AgentLoop:
         Returns:
             The assistant's response text
         """
-        trace_id = str(uuid.uuid4())
 
         memory_ctx = ""
         if self.memory:

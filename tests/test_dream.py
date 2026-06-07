@@ -1,10 +1,12 @@
 """Tests for Dream memory consolidation."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 from memory.dream import DreamConsolidator
-from memory.store import ChromaMemoryStore
 from memory.short_term import ShortTermMemory
+from memory.store import ChromaMemoryStore
 from providers.base import LLMResponse
 
 
@@ -18,7 +20,8 @@ class TestDreamConsolidator:
             await short_term.add("chat_A", "user_1", f"msg {i}")
 
         dreamer = DreamConsolidator(
-            chroma_store=chroma, short_term=short_term,
+            chroma_store=chroma,
+            short_term=short_term,
             consolidation_threshold=20,
         )
         result = await dreamer.maybe_consolidate("chat_A")
@@ -41,7 +44,8 @@ class TestDreamConsolidator:
             await short_term.add("chat_A", "user_1", f)
 
         dreamer = DreamConsolidator(
-            chroma_store=chroma, short_term=short_term,
+            chroma_store=chroma,
+            short_term=short_term,
             consolidation_threshold=5,
         )
         result = await dreamer.maybe_consolidate("chat_A")
@@ -54,18 +58,23 @@ class TestDreamConsolidator:
         short_term = ShortTermMemory(temp_dir)
 
         for i in range(25):
-            await short_term.add("chat_A", "user_1",
-                          f"User said: remember that I work on Project X with task {i}")
+            await short_term.add(
+                "chat_A", "user_1", f"User said: remember that I work on Project X with task {i}"
+            )
 
         provider = MagicMock()
-        provider.chat = AsyncMock(return_value=LLMResponse(
-            content='[{"fact": "User works on Project X", "importance": 0.9, "entities": ["Project X"]}]',
-            stop_reason="end_turn",
-        ))
+        provider.chat = AsyncMock(
+            return_value=LLMResponse(
+                content='[{"fact": "User works on Project X", "importance": 0.9, "entities": ["Project X"]}]',
+                stop_reason="end_turn",
+            )
+        )
 
         dreamer = DreamConsolidator(
-            chroma_store=chroma, short_term=short_term,
-            provider=provider, consolidation_threshold=20,
+            chroma_store=chroma,
+            short_term=short_term,
+            provider=provider,
+            consolidation_threshold=20,
         )
         result = await dreamer.maybe_consolidate("chat_A")
         assert result["consolidated"]
@@ -91,7 +100,8 @@ class TestDreamConsolidator:
             await short_term.add("chat_B", "user_B", f"B's message {i}: Project Beta")
 
         dreamer = DreamConsolidator(
-            chroma_store=chroma, short_term=short_term,
+            chroma_store=chroma,
+            short_term=short_term,
             consolidation_threshold=20,
         )
 

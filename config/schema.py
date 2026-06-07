@@ -60,10 +60,12 @@ class CronJobConfig(BaseModel):
 class CronConfig(BaseModel):
     """Cron scheduler configuration."""
 
-    jobs: dict[str, CronJobConfig] = Field(default_factory=lambda: {
-        "memory_consolidation": CronJobConfig(interval_minutes=30),
-        "soul_evolution": CronJobConfig(interval_minutes=240),
-    })
+    jobs: dict[str, CronJobConfig] = Field(
+        default_factory=lambda: {
+            "memory_consolidation": CronJobConfig(interval_minutes=30),
+            "soul_evolution": CronJobConfig(interval_minutes=240),
+        }
+    )
 
 
 class LoggingConfig(BaseModel):

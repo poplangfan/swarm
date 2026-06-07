@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import json
-from typing import Any
 
 MSG_TYPE_MAP = {
-    "image": "[image]", "audio": "[audio]",
-    "file": "[file]", "sticker": "[sticker]",
+    "image": "[image]",
+    "audio": "[audio]",
+    "file": "[file]",
+    "sticker": "[sticker]",
 }
 
 
@@ -30,7 +31,7 @@ def parse_message_content(msg_type: str, content_json: str) -> tuple[str, list[s
             key = content.get("image_key", "")
             images = [key] if key else []
         count = len(images)
-        label = f"[image]" if count <= 1 else f"[{count} images]"
+        label = "[image]" if count <= 1 else f"[{count} images]"
         return label, [str(k) for k in images]
     elif msg_type == "audio":
         return "[audio]", []

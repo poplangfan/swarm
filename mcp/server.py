@@ -22,11 +22,13 @@ class SwarmMCPServer:
         for name in self._registry.tool_names:
             tool = self._registry.get(name)
             if tool:
-                tools.append({
-                    "name": tool.name,
-                    "description": tool.description,
-                    "inputSchema": tool.parameters,
-                })
+                tools.append(
+                    {
+                        "name": tool.name,
+                        "description": tool.description,
+                        "inputSchema": tool.parameters,
+                    }
+                )
         return tools
 
     async def call_tool(self, name: str, arguments: dict) -> str:

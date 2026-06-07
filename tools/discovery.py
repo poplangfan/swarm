@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import importlib
 import pkgutil
-from typing import Any
 
 import structlog
 
@@ -28,9 +27,11 @@ def discover_builtin_tools(package_path: str = "tools.builtin") -> list[type[Too
                 mod = importlib.import_module(module_name)
                 for attr_name in dir(mod):
                     attr = getattr(mod, attr_name)
-                    if (isinstance(attr, type) and
-                            issubclass(attr, ToolBase) and
-                            attr is not ToolBase):
+                    if (
+                        isinstance(attr, type)
+                        and issubclass(attr, ToolBase)
+                        and attr is not ToolBase
+                    ):
                         tools.append(attr)
                         logger.debug("discovered_tool", tool=attr_name, module=module_name)
             except Exception as e:
@@ -45,6 +46,7 @@ def discover_entry_point_tools(group: str = "swarm.plugins") -> list[ToolBase]:
     tools: list[ToolBase] = []
     try:
         from importlib.metadata import entry_points
+
         eps = entry_points(group=group)
         for ep in eps:
             try:

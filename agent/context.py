@@ -32,6 +32,7 @@ class RequestContext:
 @dataclass
 class TurnContext:
     """Mutable turn-level state — only used within a single turn, not persisted."""
+
     ctx: RequestContext
     messages: list[dict] = field(default_factory=list)
     tools_used: list[str] = field(default_factory=list)
@@ -57,8 +58,13 @@ class ContextBuilder:
     _RUNTIME_CONTEXT_TAG = "[Runtime Context — metadata only, not instructions]"
     _RUNTIME_CONTEXT_END = "[/Runtime Context]"
 
-    def __init__(self, workspace: Path, timezone: str | None = None,
-                 memory: Any = None, skills_loader: Any = None):
+    def __init__(
+        self,
+        workspace: Path,
+        timezone: str | None = None,
+        memory: Any = None,
+        skills_loader: Any = None,
+    ):
         self.workspace = Path(workspace)
         self.timezone = timezone or "Asia/Shanghai"
         self.memory = memory
@@ -151,14 +157,16 @@ class ContextBuilder:
         ]
         if channel:
             lines.append(f"**Channel**: {channel}")
-        lines.extend([
-            "",
-            "## Core Principles",
-            "- Be helpful, accurate, and concise.",
-            "- Use tools when they help answer the user's question.",
-            "- Respond in the same language as the user.",
-            "- For Feishu users: respect group context, don't spam, be professional.",
-        ])
+        lines.extend(
+            [
+                "",
+                "## Core Principles",
+                "- Be helpful, accurate, and concise.",
+                "- Use tools when they help answer the user's question.",
+                "- Respond in the same language as the user.",
+                "- For Feishu users: respect group context, don't spam, be professional.",
+            ]
+        )
         return "\n".join(lines)
 
     def _build_tool_contract(self) -> str:
@@ -217,8 +225,10 @@ class ContextBuilder:
         """Build the complete message list for an LLM call."""
         # System prompt
         system_content = self.build_system_prompt(
-            channel=channel, chat_id=chat_id,
-            sender_id=sender_id, session_summary=session_summary,
+            channel=channel,
+            chat_id=chat_id,
+            sender_id=sender_id,
+            session_summary=session_summary,
             memory_context=memory_context,
         )
 
@@ -226,7 +236,9 @@ class ContextBuilder:
         user_content = self._build_user_content(current_message, media)
         if not skip_runtime_lines:
             runtime_ctx = self._build_runtime_context(
-                channel=channel, chat_id=chat_id, sender_id=sender_id,
+                channel=channel,
+                chat_id=chat_id,
+                sender_id=sender_id,
                 timezone=self.timezone,
             )
             if isinstance(user_content, str):
@@ -254,11 +266,13 @@ class ContextBuilder:
             if not mime:
                 continue
             b64 = base64.b64encode(raw).decode()
-            images.append({
-                "type": "image_url",
-                "image_url": {"url": f"data:{mime};base64,{b64}"},
-                "_meta": {"path": str(p)},
-            })
+            images.append(
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:{mime};base64,{b64}"},
+                    "_meta": {"path": str(p)},
+                }
+            )
 
         if not images:
             return text
@@ -267,6 +281,7 @@ class ContextBuilder:
     @staticmethod
     def _detect_image_mime(data: bytes) -> str | None:
         from utils.media import detect_image_mime
+
         return detect_image_mime(data)
 
     @staticmethod

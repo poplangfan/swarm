@@ -1,6 +1,7 @@
 """Tests for feishu message parser."""
 
 import json
+
 from gateway.feishu_message import parse_message_content
 
 
@@ -26,10 +27,12 @@ class TestMessageParser:
         assert "sticker" in text.lower()
 
     def test_post_message(self):
-        content = json.dumps({
-            "title": "Test Post",
-            "content": [[{"tag": "text", "text": "Hello from post"}]],
-        })
+        content = json.dumps(
+            {
+                "title": "Test Post",
+                "content": [[{"tag": "text", "text": "Hello from post"}]],
+            }
+        )
         text, images = parse_message_content("post", content)
         assert "Hello from post" in text
 

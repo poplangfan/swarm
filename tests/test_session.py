@@ -1,6 +1,7 @@
 """Tests for session manager — per-chat_id isolation."""
 
 import pytest
+
 from session.manager import Session, SessionManager
 
 

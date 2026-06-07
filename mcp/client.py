@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-from typing import Any
 
 import structlog
 
@@ -22,8 +21,13 @@ class MCPClient:
     to external MCP servers and bridges their tools into Swarm's ToolRegistry.
     """
 
-    def __init__(self, server_name: str, command: str, args: list[str] | None = None,
-                 env: dict[str, str] | None = None):
+    def __init__(
+        self,
+        server_name: str,
+        command: str,
+        args: list[str] | None = None,
+        env: dict[str, str] | None = None,
+    ):
         self.server_name = server_name
         self.command = command
         self.args = args or []
@@ -36,18 +40,22 @@ class MCPClient:
         """Start the MCP server process and establish connection."""
         try:
             self._process = await asyncio.create_subprocess_exec(
-                self.command, *self.args,
+                self.command,
+                *self.args,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 env={**os.environ, **self.env},
             )
             # Send initialize request (JSON-RPC over stdio)
-            init_msg = self._build_jsonrpc("initialize", {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {},
-                "clientInfo": {"name": "swarm", "version": "0.1.0"},
-            })
+            init_msg = self._build_jsonrpc(
+                "initialize",
+                {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {"name": "swarm", "version": "0.1.0"},
+                },
+            )
             await self._send(init_msg)
             response = await self._receive()
             if response and "result" in response:
@@ -80,17 +88,19 @@ class MCPClient:
         """Call a tool on the MCP server and return the result."""
         if not self._connected:
             return f"Error: MCP server '{self.server_name}' not connected"
-        call_msg = self._build_jsonrpc("tools/call", {
-            "name": tool_name, "arguments": arguments,
-        })
+        call_msg = self._build_jsonrpc(
+            "tools/call",
+            {
+                "name": tool_name,
+                "arguments": arguments,
+            },
+        )
         await self._send(call_msg)
         response = await self._receive()
         if response and "result" in response:
             content = response["result"].get("content", [])
             if isinstance(content, list):
-                return "\n".join(
-                    c.get("text", str(c)) for c in content if isinstance(c, dict)
-                )
+                return "\n".join(c.get("text", str(c)) for c in content if isinstance(c, dict))
             return str(content)
         elif response and "error" in response:
             return f"MCP error: {response['error'].get('message', 'unknown')}"
@@ -131,33 +141,36 @@ class MCPClient:
         if self._process and self._process.stdout:
             try:
                 line = await asyncio.wait_for(
-                    self._process.stdout.readline(), timeout=timeout,
+                    self._process.stdout.readline(),
+                    timeout=timeout,
                 )
                 if line:
                     return json.loads(line.decode())
             except asyncio.TimeoutError:
                 pass  # Normal — no message within timeout window
             except json.JSONDecodeError as e:
-                logger.warning("mcp_receive_invalid_json",
-                               server=self.server_name, error=str(e))
+                logger.warning("mcp_receive_invalid_json", server=self.server_name, error=str(e))
             except Exception as e:
-                logger.warning("mcp_receive_error",
-                               server=self.server_name, error=str(e))
+                logger.warning("mcp_receive_error", server=self.server_name, error=str(e))
         return None
 
 
 class _MCPToolBridge(ToolBase):
     """Bridges an MCP tool into Swarm's ToolBase interface."""
 
-    def __init__(self, name: str, description: str,
-                 input_schema: dict, client: MCPClient | None = None):
+    def __init__(
+        self, name: str, description: str, input_schema: dict, client: MCPClient | None = None
+    ):
         self.name = name
         self.description = description
         self._input_schema = input_schema
         self._client = client
         # Convert JSON Schema to OpenAI tool parameters format
-        self.parameters = {"type": "object", "properties": input_schema.get("properties", {}),
-                          "required": input_schema.get("required", [])}
+        self.parameters = {
+            "type": "object",
+            "properties": input_schema.get("properties", {}),
+            "required": input_schema.get("required", []),
+        }
 
     async def execute(self, args: dict, ctx=None) -> str:
         if self._client:

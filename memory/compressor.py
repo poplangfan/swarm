@@ -60,10 +60,12 @@ class ContextCompressor:
         if recent_start > start_idx:
             # Add a summary marker for compressed content
             old_count = recent_start - start_idx
-            result.append({
-                "role": "system",
-                "content": f"{self.summary_marker} ({old_count} messages compressed)",
-            })
+            result.append(
+                {
+                    "role": "system",
+                    "content": f"{self.summary_marker} ({old_count} messages compressed)",
+                }
+            )
 
         # Step 4: Add recent messages
         result.extend(messages[recent_start:])
@@ -136,9 +138,11 @@ class ContextCompressor:
     def _estimate_tokens(self, messages: list[dict[str, Any]]) -> int:
         """Estimate tokens for a message list using shared counter."""
         from utils.tokens import estimate_message_tokens
+
         return estimate_message_tokens(messages)
 
     def estimate_tokens(self, text: str) -> int:
         """Estimate token count for a text string."""
         from utils.tokens import estimate_tokens as _est
+
         return _est(text)

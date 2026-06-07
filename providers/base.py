@@ -10,6 +10,7 @@ from typing import Any, AsyncIterator
 @dataclass
 class StreamChunk:
     """A single chunk from a streaming response."""
+
     content: str | None = None
     tool_call_delta: dict | None = None
     finish_reason: str | None = None
@@ -20,6 +21,7 @@ class StreamChunk:
 @dataclass
 class LLMResponse:
     """Complete LLM response after streaming or non-streaming call."""
+
     content: str | None
     stop_reason: str
     tool_calls: list[dict] = field(default_factory=list)
@@ -40,9 +42,11 @@ class LLMProvider(ABC):
 
     @property
     def generation(self):
-        if not hasattr(self, '_generation_cache'):
+        if not hasattr(self, "_generation_cache"):
+
             class _Gen:
                 max_tokens = self._max_tokens
+
             self._generation_cache = _Gen()
         return self._generation_cache
 
@@ -52,8 +56,7 @@ class LLMProvider(ABC):
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         **kwargs,
-    ) -> LLMResponse:
-        ...
+    ) -> LLMResponse: ...
 
     @abstractmethod
     async def stream(
@@ -61,11 +64,11 @@ class LLMProvider(ABC):
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         **kwargs,
-    ) -> AsyncIterator[StreamChunk]:
-        ...
+    ) -> AsyncIterator[StreamChunk]: ...
 
     def count_tokens(self, text: str) -> int:
         from utils.tokens import estimate_tokens
+
         return estimate_tokens(text)
 
     @property

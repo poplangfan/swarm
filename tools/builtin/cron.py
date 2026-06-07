@@ -61,7 +61,8 @@ class CronTool(ToolBase):
             self._counter += 1
             job_id = f"reminder_{self._counter}"
             self._reminders[job_id] = {
-                "id": job_id, "description": desc,
+                "id": job_id,
+                "description": desc,
                 "minutes": minutes,
                 "chat_id": ctx.chat_id,
             }

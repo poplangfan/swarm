@@ -1,12 +1,12 @@
 """Tests for message bus."""
 
 import pytest
-from bus.queue import MessageBus, InboundMessage, OutboundMessage
+
+from bus.queue import InboundMessage, MessageBus
 
 
 def make_msg(chat_id: str, content: str = "hello") -> InboundMessage:
-    return InboundMessage(channel="feishu", sender_id="user_1",
-                          chat_id=chat_id, content=content)
+    return InboundMessage(channel="feishu", sender_id="user_1", chat_id=chat_id, content=content)
 
 
 class TestMessageBus:
@@ -42,6 +42,11 @@ class TestMessageBus:
         assert msg.session_key == "feishu:oc_123"
 
     def test_session_key_override(self):
-        msg = InboundMessage(channel="feishu", sender_id="u1", chat_id="oc_123",
-                             content="hi", session_key_override="custom:key")
+        msg = InboundMessage(
+            channel="feishu",
+            sender_id="u1",
+            chat_id="oc_123",
+            content="hi",
+            session_key_override="custom:key",
+        )
         assert msg.session_key == "custom:key"

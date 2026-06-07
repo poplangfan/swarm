@@ -21,7 +21,7 @@ class FallbackProvider(LLMProvider):
         """Return the minimum context window across all providers in the chain."""
         if not self._providers:
             return 128_000
-        return min(getattr(p, 'context_window', 128_000) for p in self._providers)
+        return min(getattr(p, "context_window", 128_000) for p in self._providers)
 
     async def chat(self, messages, tools=None, **kwargs) -> LLMResponse:
         last_error = None

@@ -1,11 +1,10 @@
 """Tests for cron scheduler, store, and parser."""
 
 import pytest
-import time
-from pathlib import Path
+
+from cron.parser import CronParser
 from cron.scheduler import CronScheduler
 from cron.store import CronStore
-from cron.parser import CronParser
 
 
 class TestCronParser:

@@ -9,22 +9,21 @@ import asyncio
 import os
 import tempfile
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 from agent.context import ContextBuilder
-from bus.queue import MessageBus, InboundMessage
 from agent.loop import AgentLoop
+from agent.runner import AgentRunner, AgentRunSpec
+from bus.queue import MessageBus
+from providers.anthropic import AnthropicProvider
+from providers.base import LLMResponse
 from session.manager import SessionManager
-from tools.registry import ToolRegistry
+from tools.base import ToolBase, tool_result
 from tools.builtin.system import SystemTool
 from tools.builtin.web_search import WebSearchTool
-from agent.runner import AgentRunner, AgentRunSpec
-from providers.anthropic import AnthropicProvider
-from providers.base import LLMResponse, StreamChunk
-from tools.base import ToolBase, tool_result
-
+from tools.registry import ToolRegistry
 
 # ── Real LLM helpers ────────────────────────────────────────────
 
@@ -36,11 +35,14 @@ def _get_real_provider(max_tokens=256, temperature=0.1):
     if not api_key or "YOUR" in api_key:
         pytest.skip("ANTHROPIC_AUTH_TOKEN not configured")
     for k in list(os.environ.keys()):
-        if 'proxy' in k.lower():
+        if "proxy" in k.lower():
             os.environ.pop(k, None)
     return AnthropicProvider(
-        api_key=api_key, base_url=base_url,
-        model="deepseek-v4-pro", max_tokens=max_tokens, temperature=temperature,
+        api_key=api_key,
+        base_url=base_url,
+        model="deepseek-v4-pro",
+        max_tokens=max_tokens,
+        temperature=temperature,
     )
 
 
@@ -62,17 +64,23 @@ class TestFullPipeline:
         tools.register(SystemTool())
 
         loop = AgentLoop(
-            bus=bus, provider=mock_provider, workspace=temp_dir,
-            sessions=sessions, tools=tools,
+            bus=bus,
+            provider=mock_provider,
+            workspace=temp_dir,
+            sessions=sessions,
+            tools=tools,
         )
 
-        mock_provider.chat = AsyncMock(return_value=LLMResponse(
-            content="Hello, how can I help?", stop_reason="end_turn"))
+        mock_provider.chat = AsyncMock(
+            return_value=LLMResponse(content="Hello, how can I help?", stop_reason="end_turn")
+        )
 
         # Process a message through the full pipeline
         result = await loop.process_direct(
-            "Hi there", session_key="feishu:oc_test_integration",
-            channel="feishu", chat_id="oc_test_integration",
+            "Hi there",
+            session_key="feishu:oc_test_integration",
+            channel="feishu",
+            chat_id="oc_test_integration",
         )
 
         assert result is not None
@@ -105,26 +113,37 @@ class TestFullPipeline:
         tools.register(WebSearchTool())
 
         loop = AgentLoop(
-            bus=bus, provider=mock_provider, workspace=temp_dir,
+            bus=bus,
+            provider=mock_provider,
+            workspace=temp_dir,
             tools=tools,
         )
 
         # LLM first calls web_search, then gives final answer
-        mock_provider.chat = AsyncMock(side_effect=[
-            LLMResponse(
-                content=None, stop_reason="tool_calls",
-                tool_calls=[{
-                    "id": "call_1",
-                    "function": {"name": "system_command", "arguments": '{"command":"status"}'},
-                }],
-            ),
-            LLMResponse(content="Your session is active.", stop_reason="end_turn"),
-        ])
+        mock_provider.chat = AsyncMock(
+            side_effect=[
+                LLMResponse(
+                    content=None,
+                    stop_reason="tool_calls",
+                    tool_calls=[
+                        {
+                            "id": "call_1",
+                            "function": {
+                                "name": "system_command",
+                                "arguments": '{"command":"status"}',
+                            },
+                        }
+                    ],
+                ),
+                LLMResponse(content="Your session is active.", stop_reason="end_turn"),
+            ]
+        )
 
         result = await loop.process_direct(
             "what's my status?",
             session_key="feishu:oc_test_tool",
-            channel="feishu", chat_id="oc_test_tool",
+            channel="feishu",
+            chat_id="oc_test_tool",
         )
 
         assert result is not None
@@ -138,12 +157,15 @@ class TestFullPipeline:
         sessions = SessionManager(temp_dir)
 
         loop = AgentLoop(
-            bus=bus, provider=mock_provider, workspace=temp_dir,
+            bus=bus,
+            provider=mock_provider,
+            workspace=temp_dir,
             sessions=sessions,
         )
 
-        mock_provider.chat = AsyncMock(return_value=LLMResponse(
-            content="OK", stop_reason="end_turn"))
+        mock_provider.chat = AsyncMock(
+            return_value=LLMResponse(content="OK", stop_reason="end_turn")
+        )
 
         # Send a message directly (doesn't use the bus loop)
         result = await loop.process_direct("test", session_key="test:shutdown")
@@ -159,12 +181,15 @@ class TestFullPipeline:
         sessions = SessionManager(temp_dir)
 
         loop = AgentLoop(
-            bus=bus, provider=mock_provider, workspace=temp_dir,
+            bus=bus,
+            provider=mock_provider,
+            workspace=temp_dir,
             sessions=sessions,
         )
 
-        mock_provider.chat = AsyncMock(return_value=LLMResponse(
-            content="The answer is 42.", stop_reason="end_turn"))
+        mock_provider.chat = AsyncMock(
+            return_value=LLMResponse(content="The answer is 42.", stop_reason="end_turn")
+        )
 
         result = await loop.process_ephemeral("What is the answer?")
         assert "42" in result
@@ -180,22 +205,24 @@ class TestMultiTenantIsolation:
         bus = MessageBus()
 
         loop = AgentLoop(
-            bus=bus, provider=mock_provider, workspace=temp_dir,
+            bus=bus,
+            provider=mock_provider,
+            workspace=temp_dir,
             sessions=sessions,
         )
 
         async def respond(response_text):
             return LLMResponse(content=response_text, stop_reason="end_turn")
 
-        mock_provider.chat = AsyncMock(side_effect=[
-            LLMResponse(content="Reply to A", stop_reason="end_turn"),
-            LLMResponse(content="Reply to B", stop_reason="end_turn"),
-        ])
+        mock_provider.chat = AsyncMock(
+            side_effect=[
+                LLMResponse(content="Reply to A", stop_reason="end_turn"),
+                LLMResponse(content="Reply to B", stop_reason="end_turn"),
+            ]
+        )
 
-        await loop.process_direct("Message A", session_key="feishu:chat_A",
-                                  chat_id="chat_A")
-        await loop.process_direct("Message B", session_key="feishu:chat_B",
-                                  chat_id="chat_B")
+        await loop.process_direct("Message A", session_key="feishu:chat_A", chat_id="chat_A")
+        await loop.process_direct("Message B", session_key="feishu:chat_B", chat_id="chat_B")
 
         session_a = await sessions.get_or_create("feishu:chat_A")
         session_b = await sessions.get_or_create("feishu:chat_B")
@@ -269,8 +296,16 @@ class TestRealLLMProvider:
         response = await p.chat(messages)
         assert response.usage
         usage = response.usage
-        input_tokens = usage.get("input_tokens", 0) if isinstance(usage, dict) else getattr(usage, "input_tokens", 0)
-        output_tokens = usage.get("output_tokens", 0) if isinstance(usage, dict) else getattr(usage, "output_tokens", 0)
+        input_tokens = (
+            usage.get("input_tokens", 0)
+            if isinstance(usage, dict)
+            else getattr(usage, "input_tokens", 0)
+        )
+        output_tokens = (
+            usage.get("output_tokens", 0)
+            if isinstance(usage, dict)
+            else getattr(usage, "output_tokens", 0)
+        )
         assert input_tokens > 0, f"Expected input_tokens > 0, got {input_tokens}"
         assert output_tokens > 0, f"Expected output_tokens > 0, got {output_tokens}"
 
@@ -338,7 +373,9 @@ class TestRealAgentRunner:
                         "description": "Echo back text. Call with {'text': 'your message'}.",
                         "parameters": {
                             "type": "object",
-                            "properties": {"text": {"type": "string", "description": "Text to echo"}},
+                            "properties": {
+                                "text": {"type": "string", "description": "Text to echo"}
+                            },
                             "required": ["text"],
                         },
                     },
@@ -349,11 +386,17 @@ class TestRealAgentRunner:
         runner = AgentRunner(p)
         spec = AgentRunSpec(
             initial_messages=[
-                {"role": "system", "content": (
-                    "You MUST call the 'echo' tool with text='hello_world' before giving any answer. "
-                    "This is a test of your tool-calling ability. First call echo, THEN reply."
-                )},
-                {"role": "user", "content": "Call the echo tool with hello_world, then tell me the result."},
+                {
+                    "role": "system",
+                    "content": (
+                        "You MUST call the 'echo' tool with text='hello_world' before giving any answer. "
+                        "This is a test of your tool-calling ability. First call echo, THEN reply."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": "Call the echo tool with hello_world, then tell me the result.",
+                },
             ],
             tools=registry,
             max_iterations=5,
@@ -403,10 +446,13 @@ class TestRealAgentRunner:
         runner = AgentRunner(p)
         spec = AgentRunSpec(
             initial_messages=[
-                {"role": "system", "content": (
-                    "You have a tool called 'broken_tool' that always crashes. "
-                    "You MUST call it exactly once, then report what happened to the user. Be brief."
-                )},
+                {
+                    "role": "system",
+                    "content": (
+                        "You have a tool called 'broken_tool' that always crashes. "
+                        "You MUST call it exactly once, then report what happened to the user. Be brief."
+                    ),
+                },
                 {"role": "user", "content": "Call the broken_tool and tell me what happened."},
             ],
             tools=registry,
@@ -458,8 +504,11 @@ class TestRealFullAgentLoop:
             ctx_builder = ContextBuilder(workspace=ws, timezone="Asia/Shanghai")
 
             loop = AgentLoop(
-                bus=bus, provider=p, workspace=ws,
-                sessions=sessions, context_builder=ctx_builder,
+                bus=bus,
+                provider=p,
+                workspace=ws,
+                sessions=sessions,
+                context_builder=ctx_builder,
                 max_iterations=5,
             )
 
@@ -473,6 +522,7 @@ class TestRealFullAgentLoop:
             assert "SWARM_INTEGRATION_TEST_PASS" in response.content
         finally:
             import shutil
+
             shutil.rmtree(ws, ignore_errors=True)
 
     @pytest.mark.asyncio
@@ -487,8 +537,11 @@ class TestRealFullAgentLoop:
             ctx_builder = ContextBuilder(workspace=ws)
 
             loop = AgentLoop(
-                bus=bus, provider=p, workspace=ws,
-                sessions=sessions, context_builder=ctx_builder,
+                bus=bus,
+                provider=p,
+                workspace=ws,
+                sessions=sessions,
+                context_builder=ctx_builder,
                 max_iterations=5,
             )
 
@@ -510,6 +563,7 @@ class TestRealFullAgentLoop:
             assert "蓝" in response.content or "blue" in response.content.lower()
         finally:
             import shutil
+
             shutil.rmtree(ws, ignore_errors=True)
 
     @pytest.mark.asyncio
@@ -524,8 +578,11 @@ class TestRealFullAgentLoop:
             ctx_builder = ContextBuilder(workspace=ws)
 
             loop = AgentLoop(
-                bus=bus, provider=p, workspace=ws,
-                sessions=sessions, context_builder=ctx_builder,
+                bus=bus,
+                provider=p,
+                workspace=ws,
+                sessions=sessions,
+                context_builder=ctx_builder,
             )
 
             # Track LLM calls
@@ -550,6 +607,7 @@ class TestRealFullAgentLoop:
             assert call_count == 0, f"Expected 0 LLM calls, got {call_count}"
         finally:
             import shutil
+
             shutil.rmtree(ws, ignore_errors=True)
 
     @pytest.mark.asyncio
@@ -564,8 +622,11 @@ class TestRealFullAgentLoop:
             ctx_builder = ContextBuilder(workspace=ws)
 
             loop = AgentLoop(
-                bus=bus, provider=p, workspace=ws,
-                sessions=sessions, context_builder=ctx_builder,
+                bus=bus,
+                provider=p,
+                workspace=ws,
+                sessions=sessions,
+                context_builder=ctx_builder,
                 max_iterations=3,
             )
 
@@ -598,12 +659,15 @@ class TestRealFullAgentLoop:
             assert resp_b is not None, "Session B got no response"
             a_content = resp_a.content or ""
             b_content = resp_b.content or ""
-            assert ("蓝" in a_content or "blue" in a_content.lower()), \
+            assert "蓝" in a_content or "blue" in a_content.lower(), (
                 f"Session A should remember blue, got: {a_content[:200]}"
-            assert ("红" in b_content or "red" in b_content.lower()), \
+            )
+            assert "红" in b_content or "red" in b_content.lower(), (
                 f"Session B should remember red, got: {b_content[:200]}"
+            )
         finally:
             import shutil
+
             shutil.rmtree(ws, ignore_errors=True)
 
 

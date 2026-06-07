@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import gzip
-import logging
 import shutil
 import time
-from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 from pathlib import Path
 
@@ -36,8 +34,11 @@ class CompressingTimedRotatingFileHandler(TimedRotatingFileHandler):
 
         filename = str(self._log_dir / f"{log_name}.log")
         super().__init__(
-            filename=filename, when=when, interval=interval,
-            backupCount=backup_count, encoding=encoding,
+            filename=filename,
+            when=when,
+            interval=interval,
+            backupCount=backup_count,
+            encoding=encoding,
         )
         self.suffix = "%Y-%m-%d"
 
@@ -70,8 +71,7 @@ class CompressingTimedRotatingFileHandler(TimedRotatingFileHandler):
 
     def _cleanup_old_logs(self) -> None:
         cutoff = time.time() - (self._retention_days * 86400)
-        for pattern in [f"{self._log_name}-*.log.gz",
-                         f"{self._log_name}-*.log"]:
+        for pattern in [f"{self._log_name}-*.log.gz", f"{self._log_name}-*.log"]:
             for f in self._log_dir.glob(pattern):
                 if f.stat().st_mtime < cutoff:
                     try:

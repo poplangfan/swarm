@@ -28,7 +28,10 @@ class CronParser:
         # Every weekday
         (r"every\s+weekday\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?", r"0 \1 * * 1-5"),
         # Every Monday/Tuesday/etc
-        (r"every\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?", None),
+        (
+            r"every\s+(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?",
+            None,
+        ),
         # Every N minutes/hours
         (r"every\s+(\d+)\s+minutes?", r"*/\1 * * * *"),
         (r"every\s+(\d+)\s+hours?", r"0 */\1 * * *"),
@@ -37,13 +40,27 @@ class CronParser:
         # Weekly
         (r"weekly\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?", r"0 \1 * * 0"),
         # Monthly
-        (r"monthly\s+on\s+day\s+(\d{1,2})\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?", r"0 \2 \1 * *"),
+        (
+            r"monthly\s+on\s+day\s+(\d{1,2})\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?",
+            r"0 \2 \1 * *",
+        ),
     ]
 
     DAY_NAMES = {
-        "monday": 1, "tuesday": 2, "wednesday": 3,
-        "thursday": 4, "friday": 5, "saturday": 6, "sunday": 0,
-        "mon": 1, "tue": 2, "wed": 3, "thu": 4, "fri": 5, "sat": 6, "sun": 0,
+        "monday": 1,
+        "tuesday": 2,
+        "wednesday": 3,
+        "thursday": 4,
+        "friday": 5,
+        "saturday": 6,
+        "sunday": 0,
+        "mon": 1,
+        "tue": 2,
+        "wed": 3,
+        "thu": 4,
+        "fri": 5,
+        "sat": 6,
+        "sun": 0,
     }
 
     LLM_TIMEOUT = 10.0  # seconds
@@ -131,11 +148,14 @@ Examples:
             if ampm == "am" and hour == 12:
                 hour = 0
             cron = f"{minute} {hour} * * *"
-            return {"cron": cron, "description": self._describe_cron(cron),
-                    "confidence": 0.5}
+            return {"cron": cron, "description": self._describe_cron(cron), "confidence": 0.5}
 
-        return {"cron": "0 9 * * *", "description": "Every day at 9:00 AM (default)",
-                "confidence": 0.1, "note": "Could not parse time expression, using default"}
+        return {
+            "cron": "0 9 * * *",
+            "description": "Every day at 9:00 AM (default)",
+            "confidence": 0.1,
+            "note": "Could not parse time expression, using default",
+        }
 
     def _apply_template(self, template: str, match: re.Match) -> str:
         """Apply a regex match to a cron template, handling AM/PM conversion."""
@@ -151,7 +171,7 @@ Examples:
                 hour_idx = i
 
         # Apply template substitution
-        cron = re.sub(r'\\(\d+)', lambda m: str(groups[int(m.group(1)) - 1] or "0"), template)
+        cron = re.sub(r"\\(\d+)", lambda m: str(groups[int(m.group(1)) - 1] or "0"), template)
 
         # Adjust hour for PM
         if ampm == "pm" and hour_idx is not None:
@@ -183,8 +203,7 @@ Examples:
 
         day_num = self.DAY_NAMES.get(day_name, 0)
         cron = f"{minute} {hour} * * {day_num}"
-        return {"cron": cron, "description": self._describe_cron(cron),
-                "confidence": 0.9}
+        return {"cron": cron, "description": self._describe_cron(cron), "confidence": 0.9}
 
     def _describe_cron(self, cron: str) -> str:
         """Generate a human-readable description of a cron expression."""
@@ -239,7 +258,13 @@ Examples:
             candidate = now.replace(second=0, microsecond=0)
 
             # Simple case: daily at time
-            if dom == "*" and month == "*" and dow == "*" and not minute.startswith("*") and not hour.startswith("*"):
+            if (
+                dom == "*"
+                and month == "*"
+                and dow == "*"
+                and not minute.startswith("*")
+                and not hour.startswith("*")
+            ):
                 candidate = candidate.replace(hour=int(hour), minute=int(minute))
                 if candidate <= now:
                     candidate += timedelta(days=1)

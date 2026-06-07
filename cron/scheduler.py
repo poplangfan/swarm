@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import asyncio
-from datetime import datetime
 from typing import Any, Callable
 
 import structlog
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 
 logger = structlog.get_logger(__name__)
 
@@ -67,8 +65,11 @@ class CronScheduler:
         self._scheduler.add_job(
             func=func,
             trigger=CronTrigger(
-                minute=parts[0], hour=parts[1], day=parts[2],
-                month=parts[3], day_of_week=parts[4],
+                minute=parts[0],
+                hour=parts[1],
+                day=parts[2],
+                month=parts[3],
+                day_of_week=parts[4],
             ),
             id=job_id,
             name=job_id,
@@ -81,6 +82,7 @@ class CronScheduler:
     def remove_job(self, job_id: str) -> bool:
         """Remove a scheduled job. Returns False if not found."""
         from apscheduler.jobstores.base import JobLookupError
+
         try:
             self._scheduler.remove_job(job_id)
             self._jobs.pop(job_id, None)

@@ -1,10 +1,14 @@
 """Tests for feishu event dispatcher."""
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+
 from gateway.feishu_events import (
-    FeishuEventDispatcher, extract_message_data,
-    extract_reaction_data, extract_member_event_data,
+    FeishuEventDispatcher,
+    extract_member_event_data,
+    extract_message_data,
+    extract_reaction_data,
 )
 
 
@@ -42,8 +46,11 @@ class TestFeishuEventDispatcher:
         dispatcher = FeishuEventDispatcher()
         r1, r2 = [], []
 
-        async def h1(e): r1.append(e)
-        async def h2(e): r2.append(e)
+        async def h1(e):
+            r1.append(e)
+
+        async def h2(e):
+            r2.append(e)
 
         dispatcher.on("test_event", h1)
         dispatcher.on("test_event", h2)
@@ -82,6 +89,7 @@ class TestFeishuEventDispatcher:
         event.event.app_ticket = "test_ticket_12345"
 
         import asyncio
+
         asyncio.run(dispatcher.dispatch(event))
         assert dispatcher.get_app_ticket() == "test_ticket_12345"
 

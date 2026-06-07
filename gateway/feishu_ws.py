@@ -13,7 +13,6 @@ Production-grade WebSocket client with:
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import time
 from typing import Any, Callable
 
@@ -51,12 +50,12 @@ class FeishuWebSocket:
 
     # ── Configuration ────────────────────────────────────────
 
-    INITIAL_RECONNECT_DELAY = 1.0     # seconds
-    MAX_RECONNECT_DELAY = 60.0        # seconds
-    RECONNECT_MULTIPLIER = 2.0        # exponential factor
-    DEDUP_CACHE_SIZE = 10_000         # max message IDs to track
-    DEDUP_TTL_SECONDS = 3600          # how long to track message IDs
-    HEARTBEAT_TIMEOUT = 30.0          # seconds without event before health check
+    INITIAL_RECONNECT_DELAY = 1.0  # seconds
+    MAX_RECONNECT_DELAY = 60.0  # seconds
+    RECONNECT_MULTIPLIER = 2.0  # exponential factor
+    DEDUP_CACHE_SIZE = 10_000  # max message IDs to track
+    DEDUP_TTL_SECONDS = 3600  # how long to track message IDs
+    HEARTBEAT_TIMEOUT = 30.0  # seconds without event before health check
 
     def __init__(
         self,
@@ -233,17 +232,16 @@ class FeishuWebSocket:
             pass
 
         # Core: process message receive events
-        if 'im.message.receive_v1' in event_type:
+        if "im.message.receive_v1" in event_type:
             await self._process_message_event(event)
 
     async def _dispatch_to_handlers(self, event_type: str, event: Any) -> None:
         """Call all registered handlers for this event type."""
-        handlers = (self._event_handlers.get(event_type, [])
-                    + self._wildcard_handlers)
+        handlers = self._event_handlers.get(event_type, []) + self._wildcard_handlers
         for handler in handlers:
             try:
                 result = handler(event)
-                if asyncio.iscoroutine(result) or hasattr(result, '__await__'):
+                if asyncio.iscoroutine(result) or hasattr(result, "__await__"):
                     await result
             except Exception as e:
                 logger.warning(
@@ -257,15 +255,15 @@ class FeishuWebSocket:
         """Process an im.message.receive_v1 event."""
         # Extract message data
         msg_data = self._extract_event_data(event)
-        message = msg_data.get('message', {})
+        message = msg_data.get("message", {})
         if not message:
             return
 
-        msg_type = message.get('message_type', 'text')
-        content = message.get('content', '{}')
-        msg_id = message.get('message_id', '')
-        chat_id = message.get('chat_id', '')
-        chat_type = message.get('chat_type', 'p2p')
+        msg_type = message.get("message_type", "text")
+        content = message.get("content", "{}")
+        msg_id = message.get("message_id", "")
+        chat_id = message.get("chat_id", "")
+        chat_type = message.get("chat_type", "p2p")
 
         # Deduplicate
         if msg_id:
@@ -276,10 +274,10 @@ class FeishuWebSocket:
             self._cleanup_dedup_cache()
 
         # Extract sender
-        sender = msg_data.get('sender', {})
-        sender_id = sender.get('sender_id', {})
+        sender = msg_data.get("sender", {})
+        sender_id = sender.get("sender_id", {})
         if isinstance(sender_id, dict):
-            sender_id = sender_id.get('open_id', '')
+            sender_id = sender_id.get("open_id", "")
         elif not isinstance(sender_id, str):
             sender_id = str(sender_id)
 
@@ -291,7 +289,7 @@ class FeishuWebSocket:
             return
 
         # Check group policy
-        if chat_type == 'group':
+        if chat_type == "group":
             if not self._should_process_group_message(message, msg_data):
                 return
 
@@ -306,8 +304,8 @@ class FeishuWebSocket:
                 "message_id": str(msg_id),
                 "chat_type": str(chat_type),
                 "msg_type": msg_type,
-                "root_id": message.get('root_id', ''),
-                "parent_id": message.get('parent_id', ''),
+                "root_id": message.get("root_id", ""),
+                "parent_id": message.get("parent_id", ""),
             },
         )
 
@@ -326,19 +324,19 @@ class FeishuWebSocket:
     @staticmethod
     def _get_event_type(event: Any) -> str:
         """Extract event type from various event formats."""
-        if hasattr(event, 'type'):
+        if hasattr(event, "type"):
             return str(event.type)
         if isinstance(event, dict):
-            return event.get('type', event.get('schema', ''))
+            return event.get("type", event.get("schema", ""))
         return str(event)
 
     @staticmethod
     def _extract_event_data(event: Any) -> dict:
         """Extract the event data payload from various formats."""
-        if hasattr(event, 'event'):
+        if hasattr(event, "event"):
             return event.event or {}
         if isinstance(event, dict):
-            return event.get('event', event)
+            return event.get("event", event)
         return {}
 
     def _should_process_group_message(self, message: dict, msg_data: dict) -> bool:
@@ -348,12 +346,12 @@ class FeishuWebSocket:
             return True
 
         # Mention policy (default): only if @mentioned
-        mentions = message.get('mentions', [])
+        mentions = message.get("mentions", [])
         if mentions:
             return True
 
         # Check if this is a reply to the bot's message
-        if message.get('parent_id'):
+        if message.get("parent_id"):
             return True
 
         return False
@@ -419,7 +417,6 @@ class FeishuWebSocket:
             "reconnect_delay": self._reconnect_delay,
             "uptime_seconds": int(uptime),
             "seconds_since_last_event": (
-                int(time.time() - self._last_event_time)
-                if self._last_event_time else -1
+                int(time.time() - self._last_event_time) if self._last_event_time else -1
             ),
         }

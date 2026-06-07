@@ -14,6 +14,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class InboundMessage:
     """A message received from an external channel."""
+
     channel: str
     sender_id: str
     chat_id: str
@@ -30,6 +31,7 @@ class InboundMessage:
 @dataclass
 class OutboundMessage:
     """A message to be sent to an external channel."""
+
     channel: str
     chat_id: str
     content: str
@@ -52,9 +54,9 @@ class MessageBus:
             self._inbound.put_nowait(msg)
             return True
         except asyncio.QueueFull:
-            logger.warning("inbound_queue_full",
-                           chat_id=msg.chat_id,
-                           content_preview=str(msg.content)[:100])
+            logger.warning(
+                "inbound_queue_full", chat_id=msg.chat_id, content_preview=str(msg.content)[:100]
+            )
             return False
 
     async def consume_inbound(self) -> InboundMessage:
@@ -64,9 +66,9 @@ class MessageBus:
         try:
             self._outbound.put_nowait(msg)
         except asyncio.QueueFull:
-            logger.warning("outbound_queue_full",
-                          chat_id=msg.chat_id,
-                          content_preview=str(msg.content)[:100])
+            logger.warning(
+                "outbound_queue_full", chat_id=msg.chat_id, content_preview=str(msg.content)[:100]
+            )
 
     async def consume_outbound(self) -> OutboundMessage:
         return await self._outbound.get()

@@ -60,7 +60,9 @@ class WebSearchTool(ToolBase):
         # 1. Primary: result__snippet class
         # 2. Fallback: result__body class (alternative DDG layout)
         # 3. Last resort: any <a> tag text
-        results = self._extract_results(text, num,
+        results = self._extract_results(
+            text,
+            num,
             r'class="result__snippet"[^>]*>(.*?)</a>',
             r'class="result__body"[^>]*>(.*?)</a>',
         )
@@ -76,16 +78,16 @@ class WebSearchTool(ToolBase):
             if snippets:
                 results = []
                 for s in snippets[:num]:
-                    clean = re.sub(r'<[^>]+>', '', s).strip()
+                    clean = re.sub(r"<[^>]+>", "", s).strip()
                     if clean and len(clean) > 5:
-                        results.append(f"{len(results)+1}. {clean}")
+                        results.append(f"{len(results) + 1}. {clean}")
                 if results:
                     return results
         # Last resort: extract text from any anchor tags
-        raw_links = re.findall(r'<a[^>]*>(.*?)</a>', text, re.DOTALL)
+        raw_links = re.findall(r"<a[^>]*>(.*?)</a>", text, re.DOTALL)
         results = []
         for s in raw_links[:num]:
-            clean = re.sub(r'<[^>]+>', '', s).strip()
+            clean = re.sub(r"<[^>]+>", "", s).strip()
             if clean and len(clean) > 10:
-                results.append(f"{len(results)+1}. {clean}")
+                results.append(f"{len(results) + 1}. {clean}")
         return results

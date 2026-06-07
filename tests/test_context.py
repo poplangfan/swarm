@@ -1,8 +1,8 @@
 """Tests for ContextBuilder — system prompt assembly."""
 
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock
+
 from agent.context import ContextBuilder, RequestContext
 
 
@@ -16,10 +16,16 @@ class TestContextBuilder:
 
     def test_builds_messages(self):
         cb = ContextBuilder(workspace=Path("."))
-        history = [{"role": "user", "content": "previous"}, {"role": "assistant", "content": "reply"}]
+        history = [
+            {"role": "user", "content": "previous"},
+            {"role": "assistant", "content": "reply"},
+        ]
         msgs = cb.build_messages(
-            history=history, current_message="hello",
-            channel="feishu", chat_id="oc_test", sender_id="user_1",
+            history=history,
+            current_message="hello",
+            channel="feishu",
+            chat_id="oc_test",
+            sender_id="user_1",
         )
         assert len(msgs) == 4  # system + 2 history + 1 user
         assert msgs[0]["role"] == "system"
@@ -30,8 +36,11 @@ class TestContextBuilder:
     def test_runtime_context_appended(self):
         cb = ContextBuilder(workspace=Path("."))
         msgs = cb.build_messages(
-            history=[], current_message="hello",
-            channel="feishu", chat_id="oc_test", sender_id="user_1",
+            history=[],
+            current_message="hello",
+            channel="feishu",
+            chat_id="oc_test",
+            sender_id="user_1",
         )
         content = str(msgs[1]["content"])
         assert "[Runtime Context" in content
@@ -57,22 +66,31 @@ class TestContextBuilder:
 
 class TestRequestContext:
     def test_equality(self):
-        ctx1 = RequestContext(trace_id="t1", chat_id="c1", chat_type="p2p",
-                             user_id="u1", message_id="m1")
-        ctx2 = RequestContext(trace_id="t1", chat_id="c1", chat_type="p2p",
-                             user_id="u1", message_id="m1")
+        ctx1 = RequestContext(
+            trace_id="t1", chat_id="c1", chat_type="p2p", user_id="u1", message_id="m1"
+        )
+        ctx2 = RequestContext(
+            trace_id="t1", chat_id="c1", chat_type="p2p", user_id="u1", message_id="m1"
+        )
         assert ctx1 == ctx2
 
     def test_different_chat_ids(self):
-        ctx1 = RequestContext(trace_id="t1", chat_id="c1", chat_type="p2p",
-                             user_id="u1", message_id="m1")
-        ctx2 = RequestContext(trace_id="t1", chat_id="c2", chat_type="p2p",
-                             user_id="u1", message_id="m1")
+        ctx1 = RequestContext(
+            trace_id="t1", chat_id="c1", chat_type="p2p", user_id="u1", message_id="m1"
+        )
+        ctx2 = RequestContext(
+            trace_id="t1", chat_id="c2", chat_type="p2p", user_id="u1", message_id="m1"
+        )
         assert ctx1 != ctx2
 
     def test_permissions(self):
-        ctx = RequestContext(trace_id="t1", chat_id="c1", chat_type="p2p",
-                            user_id="u1", message_id="m1",
-                            permissions=frozenset(["web:search", "message:send"]))
+        ctx = RequestContext(
+            trace_id="t1",
+            chat_id="c1",
+            chat_type="p2p",
+            user_id="u1",
+            message_id="m1",
+            permissions=frozenset(["web:search", "message:send"]),
+        )
         assert "web:search" in ctx.permissions
         assert "admin:delete" not in ctx.permissions

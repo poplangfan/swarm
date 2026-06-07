@@ -1,6 +1,5 @@
 """Tests for tool permission system."""
 
-import pytest
 from tools.permission import Permission, PermissionSet
 
 
@@ -39,6 +38,7 @@ class TestPermissionSet:
 
     def test_default_permissions_exist(self):
         from tools.permission import DEFAULT_PERMISSIONS
+
         assert "user" in DEFAULT_PERMISSIONS
         assert "admin" in DEFAULT_PERMISSIONS
         user_perms = DEFAULT_PERMISSIONS["user"]

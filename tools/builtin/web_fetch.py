@@ -17,7 +17,11 @@ class WebFetchTool(ToolBase):
         "type": "object",
         "properties": {
             "url": {"type": "string", "description": "The URL to fetch"},
-            "max_chars": {"type": "integer", "description": "Max characters to return", "default": 8000},
+            "max_chars": {
+                "type": "integer",
+                "description": "Max characters to return",
+                "default": 8000,
+            },
         },
         "required": ["url"],
     }
@@ -64,30 +68,30 @@ class WebFetchTool(ToolBase):
     def _extract_text(self, html: str) -> str:
         """Extract readable text from HTML."""
         # Remove scripts, styles, and metadata
-        html = re.sub(r'<script[^>]*>.*?</script>', '', html, flags=re.DOTALL | re.IGNORECASE)
-        html = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL | re.IGNORECASE)
-        html = re.sub(r'<head[^>]*>.*?</head>', '', html, flags=re.DOTALL | re.IGNORECASE)
-        html = re.sub(r'<nav[^>]*>.*?</nav>', '', html, flags=re.DOTALL | re.IGNORECASE)
-        html = re.sub(r'<footer[^>]*>.*?</footer>', '', html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r"<script[^>]*>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r"<style[^>]*>.*?</style>", "", html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r"<head[^>]*>.*?</head>", "", html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r"<nav[^>]*>.*?</nav>", "", html, flags=re.DOTALL | re.IGNORECASE)
+        html = re.sub(r"<footer[^>]*>.*?</footer>", "", html, flags=re.DOTALL | re.IGNORECASE)
 
         # Replace block elements with newlines
-        for tag in ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'li', 'tr', 'br']:
-            html = re.sub(f'</?{tag}[^>]*>', '\n', html, flags=re.IGNORECASE)
+        for tag in ["p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "li", "tr", "br"]:
+            html = re.sub(f"</?{tag}[^>]*>", "\n", html, flags=re.IGNORECASE)
 
         # Strip remaining tags
-        text = re.sub(r'<[^>]+>', ' ', html)
+        text = re.sub(r"<[^>]+>", " ", html)
         # Collapse whitespace
-        text = re.sub(r'[ \t]+', ' ', text)
-        text = re.sub(r'\n{3,}', '\n\n', text)
+        text = re.sub(r"[ \t]+", " ", text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
         # Decode HTML entities
-        text = text.replace('&amp;', '&').replace('&lt;', '<').replace('&gt;', '>')
-        text = text.replace('&quot;', '"').replace('&#39;', "'").replace('&nbsp;', ' ')
+        text = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+        text = text.replace("&quot;", '"').replace("&#39;", "'").replace("&nbsp;", " ")
 
         return text.strip()
 
     def _extract_title(self, html: str) -> str | None:
         """Extract the page title from HTML."""
-        match = re.search(r'<title[^>]*>(.*?)</title>', html, re.IGNORECASE | re.DOTALL)
+        match = re.search(r"<title[^>]*>(.*?)</title>", html, re.IGNORECASE | re.DOTALL)
         if match:
             return match.group(1).strip()
         return None

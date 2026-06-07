@@ -17,6 +17,7 @@ _ENV_VAR_RE = re.compile(r"\$\{([^}]+)\}")
 def _resolve_env_vars(value: Any) -> Any:
     """Recursively substitute ${ENV_VAR} placeholders in strings."""
     if isinstance(value, str):
+
         def _replace(match: re.Match) -> str:
             var = match.group(1)
             default = None
@@ -28,6 +29,7 @@ def _resolve_env_vars(value: Any) -> Any:
             if default is not None:
                 return default.strip()
             return match.group(0)
+
         return _ENV_VAR_RE.sub(_replace, value)
     elif isinstance(value, dict):
         return {k: _resolve_env_vars(v) for k, v in value.items()}
@@ -60,7 +62,7 @@ def load_config(path: str | Path | None = None) -> SwarmConfig:
                 break
         else:
             raise FileNotFoundError(
-                f"Config file not found. Searched: "
+                "Config file not found. Searched: "
                 + ", ".join(str(p) for p in candidates)
                 + ". Copy config.yaml.example to config.yaml and fill in your values."
             )

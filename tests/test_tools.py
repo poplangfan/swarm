@@ -1,9 +1,9 @@
 """Tests for tools system."""
 
 import pytest
-from tools.base import tool_result, ToolBase
+
+from tools.base import ToolBase, tool_result
 from tools.registry import ToolRegistry
-from agent.context import RequestContext
 
 
 class EchoTool(ToolBase):
@@ -14,6 +14,7 @@ class EchoTool(ToolBase):
         "properties": {"text": {"type": "string"}},
         "required": ["text"],
     }
+
     async def execute(self, args, ctx):
         return tool_result(args.get("text", ""))
 

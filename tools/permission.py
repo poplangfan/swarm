@@ -8,6 +8,7 @@ from enum import Enum
 
 class Permission(Enum):
     """Standard tool permissions."""
+
     MESSAGE_SEND = "message:send"
     MESSAGE_READ = "message:read"
     FILE_READ = "file:read"
@@ -22,6 +23,7 @@ class Permission(Enum):
 @dataclass
 class PermissionSet:
     """A set of permissions that can be checked against."""
+
     grants: set[str] = field(default_factory=set)
 
     def has(self, permission: Permission | str) -> bool:
@@ -45,12 +47,14 @@ class PermissionSet:
 
 # Default permissions for built-in roles
 DEFAULT_PERMISSIONS: dict[str, PermissionSet] = {
-    "user": PermissionSet(grants={
-        Permission.MESSAGE_SEND.value,
-        Permission.MESSAGE_READ.value,
-        Permission.WEB_SEARCH.value,
-        Permission.WEB_FETCH.value,
-        Permission.SYSTEM_COMMAND.value,
-    }),
+    "user": PermissionSet(
+        grants={
+            Permission.MESSAGE_SEND.value,
+            Permission.MESSAGE_READ.value,
+            Permission.WEB_SEARCH.value,
+            Permission.WEB_FETCH.value,
+            Permission.SYSTEM_COMMAND.value,
+        }
+    ),
     "admin": PermissionSet.full_access(),
 }

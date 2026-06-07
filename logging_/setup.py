@@ -47,7 +47,8 @@ def setup_logging(
 
     if json_format:
         app_handler = CompressingTimedRotatingFileHandler(
-            log_dir=str(log_path), retention_days=retention_days,
+            log_dir=str(log_path),
+            retention_days=retention_days,
             log_name="swarm",
         )
         app_handler.setLevel(level_num)
@@ -61,7 +62,8 @@ def setup_logging(
 
     if error_separate:
         error_handler = CompressingTimedRotatingFileHandler(
-            log_dir=str(log_path), retention_days=retention_days,
+            log_dir=str(log_path),
+            retention_days=retention_days,
             log_name="swarm-error",
         )
         error_handler.setLevel(logging.ERROR)
@@ -70,7 +72,8 @@ def setup_logging(
 
     if audit_enabled:
         audit_handler = CompressingTimedRotatingFileHandler(
-            log_dir=str(log_path), retention_days=retention_days * 2,
+            log_dir=str(log_path),
+            retention_days=retention_days * 2,
             log_name="audit",
         )
         audit_handler.setLevel(logging.INFO)

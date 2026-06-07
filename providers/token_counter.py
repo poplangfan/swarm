@@ -15,8 +15,9 @@ class TokenCounter:
         self._encoder = None
         try:
             import tiktoken
-            _CL100K_MODELS = ("gpt-4", "gpt-4o", "gpt-3.5", "text-embedding", "o1", "o3")
-            if any(x in model for x in _CL100K_MODELS):
+
+            _cl100k_models = ("gpt-4", "gpt-4o", "gpt-3.5", "text-embedding", "o1", "o3")
+            if any(x in model for x in _cl100k_models):
                 self._encoder = tiktoken.get_encoding("cl100k_base")
         except ImportError:
             pass

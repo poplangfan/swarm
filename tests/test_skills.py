@@ -2,7 +2,8 @@
 
 import tempfile
 from pathlib import Path
-from skills.loader import SkillsLoader, Skill
+
+from skills.loader import SkillsLoader
 
 
 class TestSkillsLoader:

@@ -1,11 +1,11 @@
 """Tests for plugin system — manifest protocol, loader discovery."""
 
 import json
-import pytest
 import tempfile
 from pathlib import Path
-from plugins.protocol import PluginManifest, PluginState
+
 from plugins.loader import PluginLoader
+from plugins.protocol import PluginManifest, PluginState
 
 
 class TestPluginManifest:
@@ -27,7 +27,9 @@ class TestPluginManifest:
 
     def test_to_dict(self):
         manifest = PluginManifest(
-            name="test", version="0.1.0", description="Test",
+            name="test",
+            version="0.1.0",
+            description="Test",
             capabilities=[{"type": "tool", "provides": ["echo"]}],
         )
         d = manifest.to_dict()
@@ -105,12 +107,16 @@ class TestPluginLoader:
             plugins_dir.mkdir()
             plugin_dir = plugins_dir / "list-test"
             plugin_dir.mkdir()
-            (plugin_dir / "manifest.json").write_text(json.dumps({
-                "name": "list-test",
-                "version": "1.0",
-                "description": "For listing",
-                "capabilities": [{"type": "skill", "provides": ["test"]}],
-            }))
+            (plugin_dir / "manifest.json").write_text(
+                json.dumps(
+                    {
+                        "name": "list-test",
+                        "version": "1.0",
+                        "description": "For listing",
+                        "capabilities": [{"type": "skill", "provides": ["test"]}],
+                    }
+                )
+            )
 
             loader = PluginLoader(plugins_dir)
             loader.discover_filesystem()
@@ -124,12 +130,16 @@ class TestPluginLoader:
             plugins_dir.mkdir()
             plugin_dir = plugins_dir / "disable-test"
             plugin_dir.mkdir()
-            (plugin_dir / "manifest.json").write_text(json.dumps({
-                "name": "disable-test",
-                "version": "1.0",
-                "description": "For disabling",
-                "capabilities": [],
-            }))
+            (plugin_dir / "manifest.json").write_text(
+                json.dumps(
+                    {
+                        "name": "disable-test",
+                        "version": "1.0",
+                        "description": "For disabling",
+                        "capabilities": [],
+                    }
+                )
+            )
 
             loader = PluginLoader(plugins_dir)
             loader.discover_filesystem()

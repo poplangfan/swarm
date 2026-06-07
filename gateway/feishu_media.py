@@ -15,8 +15,13 @@ logger = structlog.get_logger(__name__)
 class FeishuMedia:
     """Download media files from Feishu using the Im API."""
 
-    def __init__(self, app_id: str, app_secret: str, domain: str = "feishu",
-                 download_dir: str = "./data/media"):
+    def __init__(
+        self,
+        app_id: str,
+        app_secret: str,
+        domain: str = "feishu",
+        download_dir: str = "./data/media",
+    ):
         self._domain = domain
         self._download_dir = Path(download_dir)
         self._download_dir.mkdir(parents=True, exist_ok=True)
@@ -25,7 +30,9 @@ class FeishuMedia:
     async def download_image(self, image_key: str) -> Path | None:
         """Download an image from Feishu by image_key. Returns local file path."""
         token = await self._token.get_token()
-        base = "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        base = (
+            "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        )
         try:
             async with httpx.AsyncClient() as client:
                 resp = await client.get(
@@ -35,8 +42,9 @@ class FeishuMedia:
                     follow_redirects=True,
                 )
                 if resp.status_code != 200:
-                    logger.warning("image_download_failed", image_key=image_key,
-                                   status=resp.status_code)
+                    logger.warning(
+                        "image_download_failed", image_key=image_key, status=resp.status_code
+                    )
                     return None
                 ext = _guess_image_ext(resp.headers.get("content-type", ""))
                 filepath = self._download_dir / f"{image_key}{ext}"
@@ -49,7 +57,9 @@ class FeishuMedia:
     async def download_file(self, file_key: str) -> Path | None:
         """Download a file from Feishu by file_key."""
         token = await self._token.get_token()
-        base = "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        base = (
+            "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        )
         try:
             async with httpx.AsyncClient() as client:
                 resp = await client.get(

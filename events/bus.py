@@ -15,6 +15,7 @@ logger = structlog.get_logger(__name__)
 
 class EventType(Enum):
     """Standard Swarm runtime events."""
+
     SESSION_CREATED = "session_created"
     SESSION_EXPIRED = "session_expired"
     TURN_STARTED = "turn_started"
@@ -31,6 +32,7 @@ class EventType(Enum):
 @dataclass
 class Event:
     """A single runtime event."""
+
     type: EventType
     timestamp: float = field(default_factory=time.time)
     trace_id: str | None = None
@@ -87,39 +89,51 @@ class EventBus:
             if asyncio.iscoroutine(result):
                 await result
         except Exception:
-            logger.exception("event_subscriber_error",
-                             event_type=event.type.value,
-                             subscriber=str(sub))
+            logger.exception(
+                "event_subscriber_error", event_type=event.type.value, subscriber=str(sub)
+            )
 
     # ── Convenience methods ──────────────────────────────────
 
     async def session_created(self, chat_id: str, **kwargs) -> None:
-        await self.publish(Event(type=EventType.SESSION_CREATED, chat_id=chat_id,
-                                 data=kwargs))
+        await self.publish(Event(type=EventType.SESSION_CREATED, chat_id=chat_id, data=kwargs))
 
     async def turn_started(self, trace_id: str, chat_id: str, **kwargs) -> None:
-        await self.publish(Event(type=EventType.TURN_STARTED, trace_id=trace_id,
-                                 chat_id=chat_id, data=kwargs))
+        await self.publish(
+            Event(type=EventType.TURN_STARTED, trace_id=trace_id, chat_id=chat_id, data=kwargs)
+        )
 
-    async def turn_completed(self, trace_id: str, chat_id: str,
-                             latency_ms: int = 0, **kwargs) -> None:
-        await self.publish(Event(
-            type=EventType.TURN_COMPLETED, trace_id=trace_id,
-            chat_id=chat_id,
-            data={"latency_ms": latency_ms, **kwargs},
-        ))
+    async def turn_completed(
+        self, trace_id: str, chat_id: str, latency_ms: int = 0, **kwargs
+    ) -> None:
+        await self.publish(
+            Event(
+                type=EventType.TURN_COMPLETED,
+                trace_id=trace_id,
+                chat_id=chat_id,
+                data={"latency_ms": latency_ms, **kwargs},
+            )
+        )
 
-    async def tool_executed(self, name: str, duration_ms: float,
-                            trace_id: str | None = None, **kwargs) -> None:
-        await self.publish(Event(
-            type=EventType.TOOL_EXECUTED, trace_id=trace_id,
-            data={"tool_name": name, "duration_ms": duration_ms, **kwargs},
-        ))
+    async def tool_executed(
+        self, name: str, duration_ms: float, trace_id: str | None = None, **kwargs
+    ) -> None:
+        await self.publish(
+            Event(
+                type=EventType.TOOL_EXECUTED,
+                trace_id=trace_id,
+                data={"tool_name": name, "duration_ms": duration_ms, **kwargs},
+            )
+        )
 
-    async def error_occurred(self, error: str, trace_id: str | None = None,
-                             chat_id: str | None = None, **kwargs) -> None:
-        await self.publish(Event(
-            type=EventType.ERROR_OCCURRED, trace_id=trace_id,
-            chat_id=chat_id,
-            data={"error": error, **kwargs},
-        ))
+    async def error_occurred(
+        self, error: str, trace_id: str | None = None, chat_id: str | None = None, **kwargs
+    ) -> None:
+        await self.publish(
+            Event(
+                type=EventType.ERROR_OCCURRED,
+                trace_id=trace_id,
+                chat_id=chat_id,
+                data={"error": error, **kwargs},
+            )
+        )

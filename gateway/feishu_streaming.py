@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import time
-from typing import Any
 
 import httpx
 import structlog
@@ -45,7 +43,9 @@ class CardKitStreamer:
     async def start_stream(self, chat_id: str) -> str | None:
         """Create an initial streaming message card. Returns the message_id."""
         token = await self._token.get_token()
-        base = "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        base = (
+            "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        )
 
         card = {
             "config": {"wide_screen_mode": True},
@@ -109,7 +109,9 @@ class CardKitStreamer:
 
         # Update card with final content (no streaming element)
         token = await self._token.get_token()
-        base = "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        base = (
+            "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        )
 
         card = {
             "config": {"wide_screen_mode": True},
@@ -117,9 +119,7 @@ class CardKitStreamer:
                 "title": {"tag": "plain_text", "content": "Swarm"},
                 "template": "green",
             },
-            "elements": [
-                {"tag": "markdown", "content": buf.text}
-            ],
+            "elements": [{"tag": "markdown", "content": buf.text}],
         }
 
         async with httpx.AsyncClient() as client:
@@ -143,7 +143,9 @@ class CardKitStreamer:
             return True
 
         token = await self._token.get_token()
-        base = "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        base = (
+            "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        )
 
         card = {
             "config": {"wide_screen_mode": True},
@@ -177,6 +179,7 @@ class CardKitStreamer:
 
 class _StreamBuffer:
     """Per-chat streaming state."""
+
     def __init__(self, msg_id: str):
         self.msg_id = msg_id
         self.text: str = ""

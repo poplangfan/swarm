@@ -20,15 +20,15 @@ class MemoryRecall:
         self._short_term = short_term
         self._use_chromadb = use_chromadb
 
-    async def query(self, query_text: str, chat_id: str, k: int = 10,
-                    time_decay_days: float = 30.0) -> list[dict[str, Any]]:
+    async def query(
+        self, query_text: str, chat_id: str, k: int = 10, time_decay_days: float = 30.0
+    ) -> list[dict[str, Any]]:
         results = []
         if self._chroma and self._use_chromadb:
             try:
                 results = await self._chroma.query(chat_id, query_text, k=k)
             except Exception as e:
-                logger.warning("chroma_recall_failed",
-                               chat_id=chat_id, error=str(e))
+                logger.warning("chroma_recall_failed", chat_id=chat_id, error=str(e))
         now = time.time()
         for r in results:
             ts_str = (r.get("metadata") or {}).get("timestamp", "")

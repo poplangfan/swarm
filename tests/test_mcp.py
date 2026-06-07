@@ -1,11 +1,13 @@
 """Tests for MCP client and server bridge."""
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+
 from mcp.client import MCPClient, _MCPToolBridge
 from mcp.server import SwarmMCPServer
-from tools.registry import ToolRegistry
 from tools.base import ToolBase
+from tools.registry import ToolRegistry
 
 
 class TestMCPToolBridge:
@@ -56,6 +58,7 @@ class TestSwarmMCPServer:
             name = "echo"
             description = "Echo back"
             parameters = {"type": "object", "properties": {}}
+
             async def execute(self, args, ctx):
                 return str(args)
 
@@ -80,6 +83,7 @@ class TestSwarmMCPServer:
                 "properties": {"a": {"type": "integer"}, "b": {"type": "integer"}},
                 "required": ["a", "b"],
             }
+
             async def execute(self, args, ctx):
                 return str(args["a"] + args["b"])
 

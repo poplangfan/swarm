@@ -1,15 +1,14 @@
 """Tests for tool auto-discovery system."""
 
-import pytest
+from tools.base import ToolBase
 from tools.discovery import discover_builtin_tools, load_all_tools
 from tools.registry import ToolRegistry
-from tools.base import ToolBase
 
 
 class TestDiscovery:
     def test_discovers_builtin_tools(self):
         tools = discover_builtin_tools("tools.builtin")
-        tool_names = [t.name for t in tools]
+        [t.name for t in tools]
         # Should find at least some built-in tool classes
         assert len(tools) >= 1
 
@@ -36,12 +35,12 @@ class TestDiscovery:
 class TestLoadAllTools:
     def test_no_duplicates(self):
         reg = ToolRegistry()
-        count1 = load_all_tools(reg)
+        _ = load_all_tools(reg)
         # Second load should not add duplicates (they're already registered)
         # Actually it will raise ValueError, so we catch it
-        count2 = 0
+        _ = 0
         try:
-            count2 = load_all_tools(reg)
+            _ = load_all_tools(reg)
         except ValueError:
             pass  # Expected if duplicate
         # Either way, registry should have tools

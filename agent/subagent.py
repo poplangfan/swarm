@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import uuid
+from contextlib import suppress
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,7 @@ logger = structlog.get_logger(__name__)
 @dataclass
 class SubagentSpec:
     """Specification for spawning a subagent task."""
+
     task_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     description: str = ""
     parent_trace_id: str = ""
@@ -30,6 +32,7 @@ class SubagentSpec:
 @dataclass
 class SubagentResult:
     """Result from a completed subagent task."""
+
     task_id: str
     content: str
     success: bool = True
@@ -86,14 +89,16 @@ class SubagentManager:
                 return SubagentResult(
                     task_id=task_id,
                     content="Subagent task timed out.",
-                    success=False, error="timeout",
+                    success=False,
+                    error="timeout",
                 )
             except Exception as e:
                 logger.error("subagent_error", task_id=task_id, error=str(e))
                 return SubagentResult(
                     task_id=task_id,
                     content=f"Subagent failed: {e}",
-                    success=False, error=str(e),
+                    success=False,
+                    error=str(e),
                 )
             finally:
                 self._active.pop(task_id, None)
@@ -105,11 +110,14 @@ class SubagentManager:
         out = []
         for i, r in enumerate(results):
             if isinstance(r, Exception):
-                out.append(SubagentResult(
-                    task_id=specs[i].task_id if i < len(specs) else "unknown",
-                    content=f"Subagent crashed: {r}",
-                    success=False, error=str(r),
-                ))
+                out.append(
+                    SubagentResult(
+                        task_id=specs[i].task_id if i < len(specs) else "unknown",
+                        content=f"Subagent crashed: {r}",
+                        success=False,
+                        error=str(r),
+                    )
+                )
             else:
                 out.append(r)
         return out

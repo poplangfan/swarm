@@ -1,7 +1,8 @@
 """Tests for events system."""
 
 import pytest
-from events.bus import EventBus, Event, EventType
+
+from events.bus import Event, EventBus, EventType
 
 
 class TestEventBus:
@@ -55,8 +56,11 @@ class TestEventBus:
         bus = EventBus()
         r1, r2 = [], []
 
-        async def h1(e): r1.append(e)
-        async def h2(e): r2.append(e)
+        async def h1(e):
+            r1.append(e)
+
+        async def h2(e):
+            r2.append(e)
 
         bus.subscribe(EventType.SESSION_CREATED, h1)
         bus.subscribe(EventType.SESSION_CREATED, h2)
@@ -74,7 +78,10 @@ class TestEventCreation:
         assert event.trace_id is None
 
     def test_event_with_data(self):
-        event = Event(type=EventType.TOOL_EXECUTED, trace_id="t1",
-                      data={"tool_name": "search", "duration_ms": 50.0})
+        event = Event(
+            type=EventType.TOOL_EXECUTED,
+            trace_id="t1",
+            data={"tool_name": "search", "duration_ms": 50.0},
+        )
         assert event.data["tool_name"] == "search"
         assert event.trace_id == "t1"

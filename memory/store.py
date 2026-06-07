@@ -15,6 +15,7 @@ logger = structlog.get_logger(__name__)
 try:
     import chromadb
     from chromadb.config import Settings
+
     HAS_CHROMADB = True
 except ImportError:
     HAS_CHROMADB = False
@@ -41,20 +42,30 @@ class ChromaMemoryStore:
         safe = chat_id.replace(":", "_").replace("/", "_")
         return f"mem_{safe}"
 
-    async def add(self, chat_id: str, user_id: str, content: str,
-                  importance: float = 0.5, metadata: dict | None = None) -> bool:
+    async def add(
+        self,
+        chat_id: str,
+        user_id: str,
+        content: str,
+        importance: float = 0.5,
+        metadata: dict | None = None,
+    ) -> bool:
         if self._client is None:
             return False
         try:
             col = await asyncio.to_thread(
-                self._client.get_or_create_collection, name=self._collection_name(chat_id))
-            meta = {"user_id": user_id, "importance": importance,
-                    "timestamp": datetime.now().isoformat()}
+                self._client.get_or_create_collection, name=self._collection_name(chat_id)
+            )
+            meta = {
+                "user_id": user_id,
+                "importance": importance,
+                "timestamp": datetime.now().isoformat(),
+            }
             if metadata:
                 meta.update(metadata)
             await asyncio.to_thread(
-                col.add, documents=[content], metadatas=[meta],
-                ids=[f"{chat_id}_{uuid.uuid4()}"])
+                col.add, documents=[content], metadatas=[meta], ids=[f"{chat_id}_{uuid.uuid4()}"]
+            )
             return True
         except Exception:
             logger.exception("memory_add_failed")
@@ -66,12 +77,10 @@ class ChromaMemoryStore:
         try:
             col_name = self._collection_name(chat_id)
             try:
-                col = await asyncio.to_thread(
-                    self._client.get_collection, name=col_name)
+                col = await asyncio.to_thread(self._client.get_collection, name=col_name)
             except Exception:
                 return []
-            results = await asyncio.to_thread(
-                col.query, query_texts=[query_text], n_results=k)
+            results = await asyncio.to_thread(col.query, query_texts=[query_text], n_results=k)
             if not results or not results.get("documents") or not results["documents"][0]:
                 return []
             entries = []

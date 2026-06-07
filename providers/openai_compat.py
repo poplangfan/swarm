@@ -13,9 +13,8 @@ Features:
 
 from __future__ import annotations
 
-from typing import Any, AsyncIterator
-
 import json
+from typing import Any, AsyncIterator
 
 import structlog
 from openai import AsyncOpenAI
@@ -112,7 +111,7 @@ class OpenAICompatProvider(LLMProvider):
 
         # Handle tool calls
         if choice.finish_reason == "tool_calls" or (
-            hasattr(choice.message, 'tool_calls') and choice.message.tool_calls
+            hasattr(choice.message, "tool_calls") and choice.message.tool_calls
         ):
             return LLMResponse(
                 content=choice.message.content,
@@ -131,7 +130,7 @@ class OpenAICompatProvider(LLMProvider):
             )
 
         # Handle reasoning/thinking content (DeepSeek-R1, o1 models)
-        reasoning_content = getattr(choice.message, 'reasoning_content', None)
+        reasoning_content = getattr(choice.message, "reasoning_content", None)
 
         # Handle refusal
         if choice.finish_reason == "content_filter":
@@ -193,7 +192,7 @@ class OpenAICompatProvider(LLMProvider):
         async for chunk in stream:
             if not chunk.choices:
                 # Usage-only chunk (stream_options)
-                if hasattr(chunk, 'usage') and chunk.usage:
+                if hasattr(chunk, "usage") and chunk.usage:
                     yield StreamChunk(usage=chunk.usage.model_dump())
                 continue
 
@@ -208,7 +207,7 @@ class OpenAICompatProvider(LLMProvider):
                 )
 
             # Reasoning content (DeepSeek-R1, o1)
-            if delta and hasattr(delta, 'reasoning_content') and delta.reasoning_content:
+            if delta and hasattr(delta, "reasoning_content") and delta.reasoning_content:
                 yield StreamChunk(
                     reasoning_content=delta.reasoning_content,
                 )
@@ -237,7 +236,9 @@ class OpenAICompatProvider(LLMProvider):
                             "id": tc_delta.id,
                             "function": {
                                 "name": tc_delta.function.name if tc_delta.function else None,
-                                "arguments": tc_delta.function.arguments if tc_delta.function else None,
+                                "arguments": tc_delta.function.arguments
+                                if tc_delta.function
+                                else None,
                             },
                         },
                     )

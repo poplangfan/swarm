@@ -1,11 +1,10 @@
 """Tests for state management — persistent store, snapshots, migration."""
 
-import json
 import pytest
-from pathlib import Path
-from state.store import StateStore
-from state.snapshot import StateSnapshot
+
 from state.migration import StateMigrator
+from state.snapshot import StateSnapshot
+from state.store import StateStore
 
 
 class TestStateStore:

@@ -1,15 +1,11 @@
 """Comprehensive tests for token store encryption and management."""
 
-import pytest
-import tempfile
 import time
-from pathlib import Path
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import MagicMock
 
-from auth.token_store import TokenStore, TokenData
-from auth.oauth import FeishuOAuth
-from auth.middleware import inject_user_token, check_authorization
 from agent.context import RequestContext
+from auth.middleware import inject_user_token
+from auth.token_store import TokenData, TokenStore
 
 
 class TestTokenStoreEncryption:
@@ -17,11 +13,14 @@ class TestTokenStoreEncryption:
 
     def test_encryption_is_not_plaintext(self, temp_dir):
         store = TokenStore(temp_dir, encrypt_key="32-byte-secret-key-for-testing!")
-        store.save("user_1", TokenData(
-            access_token="super-secret-token",
-            refresh_token="super-secret-refresh",
-            expires_at=9999999999,
-        ))
+        store.save(
+            "user_1",
+            TokenData(
+                access_token="super-secret-token",
+                refresh_token="super-secret-refresh",
+                expires_at=9999999999,
+            ),
+        )
         # Read the raw DB file — should NOT contain plaintext tokens
         db_content = (temp_dir / "tokens.db").read_bytes()
         assert b"super-secret-token" not in db_content
@@ -51,11 +50,14 @@ class TestTokenStoreEncryption:
         """Many users, no data leaks between them."""
         store = TokenStore(temp_dir, encrypt_key="32-byte-key-for-mass-testing!!")
         for i in range(100):
-            store.save(f"user_{i}", TokenData(
-                access_token=f"tok_{i}",
-                refresh_token=f"ref_{i}",
-                expires_at=time.time() + 7200,
-            ))
+            store.save(
+                f"user_{i}",
+                TokenData(
+                    access_token=f"tok_{i}",
+                    refresh_token=f"ref_{i}",
+                    expires_at=time.time() + 7200,
+                ),
+            )
         for i in range(100):
             token = store.lookup(f"user_{i}")
             assert token is not None
@@ -90,11 +92,15 @@ class TestMiddleware:
         store.is_authorized.return_value = True
 
         ctx = RequestContext(
-            trace_id="t1", chat_id="c1", chat_type="p2p",
-            user_id="u1", message_id="m1",
+            trace_id="t1",
+            chat_id="c1",
+            chat_type="p2p",
+            user_id="u1",
+            message_id="m1",
         )
 
         import asyncio
+
         updated = asyncio.run(inject_user_token(ctx, store))
         assert updated.user_token == "user_token_xxx"
 
@@ -104,22 +110,31 @@ class TestMiddleware:
         store.is_authorized.return_value = False
 
         ctx = RequestContext(
-            trace_id="t1", chat_id="c1", chat_type="p2p",
-            user_id="u1", message_id="m1",
+            trace_id="t1",
+            chat_id="c1",
+            chat_type="p2p",
+            user_id="u1",
+            message_id="m1",
         )
 
         import asyncio
+
         updated = asyncio.run(inject_user_token(ctx, store))
         assert updated.user_token is None
 
     def test_already_has_token_skipped(self):
         store = MagicMock()
         ctx = RequestContext(
-            trace_id="t1", chat_id="c1", chat_type="p2p",
-            user_id="u1", message_id="m1", user_token="existing",
+            trace_id="t1",
+            chat_id="c1",
+            chat_type="p2p",
+            user_id="u1",
+            message_id="m1",
+            user_token="existing",
         )
 
         import asyncio
+
         updated = asyncio.run(inject_user_token(ctx, store))
         assert updated.user_token == "existing"
         store.lookup.assert_not_called()

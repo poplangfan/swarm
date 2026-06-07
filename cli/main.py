@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import sys
 from pathlib import Path
 
 import typer
 from rich.console import Console
 
-from version import __version__, __logo__
+from version import __logo__, __version__
 
 app = typer.Typer(name="swarm", help="Swarm — Feishu AI Agent Framework")
 console = Console()
@@ -40,8 +39,8 @@ def chat(
 
     provider = make_provider(config.llm)
     from cli.chat import InteractiveChat
-    chat_app = InteractiveChat(provider=provider, session_name=session,
-                                config=config)
+
+    chat_app = InteractiveChat(provider=provider, session_name=session, config=config)
     asyncio.run(chat_app.run())
 
 
@@ -50,16 +49,16 @@ def ws(
     config_path: str = typer.Option("config.yaml", "--config", "-c"),
 ) -> None:
     """Start Feishu WebSocket mode."""
+    from agent.loop import AgentLoop
     from bus.queue import MessageBus
     from config.loader import load_config
     from gateway.feishu_ws import FeishuWebSocket
-    from providers.factory import make_provider
-    from agent.loop import AgentLoop
-    from session.manager import SessionManager
-    from memory.store import ChromaMemoryStore
-    from tools.registry import ToolRegistry
-    from tools.discovery import load_all_tools
     from logging_.setup import setup_logging
+    from memory.store import ChromaMemoryStore
+    from providers.factory import make_provider
+    from session.manager import SessionManager
+    from tools.discovery import load_all_tools
+    from tools.registry import ToolRegistry
 
     try:
         config = load_config(config_path)
@@ -89,19 +88,25 @@ def ws(
     memory = ChromaMemoryStore(config.memory.chroma_path)
 
     loop = AgentLoop(
-        bus=bus, provider=provider, workspace=data_dir,
-        tools=tools, sessions=sessions, memory=memory,
+        bus=bus,
+        provider=provider,
+        workspace=data_dir,
+        tools=tools,
+        sessions=sessions,
+        memory=memory,
     )
 
     feishu = FeishuWebSocket(
         app_id=config.feishu.app_id,
         app_secret=config.feishu.app_secret,
-        bus=bus, domain=config.feishu.domain,
+        bus=bus,
+        domain=config.feishu.domain,
         group_policy=config.feishu.group_policy,
     )
 
     async def run_all():
         import signal
+
         loop_task = asyncio.create_task(loop.run())
         ws_task = asyncio.create_task(feishu.start())
         stop_event = asyncio.Event()
@@ -169,7 +174,9 @@ logging:
 """
     config_path.write_text(example)
     console.print(f"[green]Created {config_path}[/green]")
-    console.print("\nNext: edit config.yaml with your credentials, then run [bold]swarm chat[/bold]")
+    console.print(
+        "\nNext: edit config.yaml with your credentials, then run [bold]swarm chat[/bold]"
+    )
 
 
 @app.command()
@@ -178,9 +185,10 @@ def validate(
 ) -> None:
     """Validate a configuration file."""
     from config.loader import load_config
+
     try:
         config = load_config(config_path)
-        console.print(f"[green]Config valid[/green]")
+        console.print("[green]Config valid[/green]")
         console.print(f"  Provider: {config.llm.provider}")
         console.print(f"  Model: {config.llm.model}")
         console.print(f"  Feishu App: {config.feishu.app_id}")

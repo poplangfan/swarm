@@ -1,9 +1,11 @@
 """Tests for subagent system."""
 
 import asyncio
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
-from agent.subagent import SubagentManager, SubagentSpec, SubagentResult
+
+from agent.subagent import SubagentManager, SubagentSpec
 from providers.base import LLMResponse
 
 
@@ -14,8 +16,9 @@ class TestSubagentManager:
 
     @pytest.mark.asyncio
     async def test_spawn_and_complete(self, mock_provider):
-        mock_provider.chat = AsyncMock(return_value=LLMResponse(
-            content="Task completed successfully", stop_reason="end_turn"))
+        mock_provider.chat = AsyncMock(
+            return_value=LLMResponse(content="Task completed successfully", stop_reason="end_turn")
+        )
         mgr = SubagentManager(provider=mock_provider, max_concurrent=3, timeout=10.0)
 
         spec = SubagentSpec(
@@ -29,11 +32,13 @@ class TestSubagentManager:
 
     @pytest.mark.asyncio
     async def test_spawn_parallel(self, mock_provider):
-        mock_provider.chat = AsyncMock(side_effect=[
-            LLMResponse(content="Result A", stop_reason="end_turn"),
-            LLMResponse(content="Result B", stop_reason="end_turn"),
-            LLMResponse(content="Result C", stop_reason="end_turn"),
-        ])
+        mock_provider.chat = AsyncMock(
+            side_effect=[
+                LLMResponse(content="Result A", stop_reason="end_turn"),
+                LLMResponse(content="Result B", stop_reason="end_turn"),
+                LLMResponse(content="Result C", stop_reason="end_turn"),
+            ]
+        )
         mgr = SubagentManager(provider=mock_provider, max_concurrent=3, timeout=10.0)
 
         specs = [
@@ -80,8 +85,7 @@ class TestSubagentManager:
         mock_provider.chat = AsyncMock(side_effect=tracked_response)
         mgr = SubagentManager(provider=mock_provider, max_concurrent=2, timeout=10.0)
 
-        specs = [SubagentSpec(description=f"Task {i}", max_iterations=2)
-                for i in range(5)]
+        specs = [SubagentSpec(description=f"Task {i}", max_iterations=2) for i in range(5)]
         results = await mgr.spawn_parallel(specs)
 
         assert len(results) == 5
@@ -99,7 +103,8 @@ class TestSubagentManager:
         # Start a subagent but don't wait for it
         spec = SubagentSpec(
             task_id="session_A_task_1",
-            description="Long task", timeout=60.0,
+            description="Long task",
+            timeout=60.0,
         )
         # Start in background
         task = asyncio.create_task(mgr.spawn(spec))
@@ -121,8 +126,10 @@ class TestSubagentSpec:
 
     def test_custom_values(self):
         spec = SubagentSpec(
-            task_id="custom_id", description="Custom",
-            max_iterations=5, timeout=60.0,
+            task_id="custom_id",
+            description="Custom",
+            max_iterations=5,
+            timeout=60.0,
             parent_trace_id="parent_123",
         )
         assert spec.task_id == "custom_id"

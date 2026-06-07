@@ -38,8 +38,7 @@ class ToolBase(ABC):
         }
 
     @abstractmethod
-    async def execute(self, args: dict[str, Any], ctx: RequestContext) -> str:
-        ...
+    async def execute(self, args: dict[str, Any], ctx: RequestContext) -> str: ...
 
     def check_permission(self, ctx: RequestContext) -> bool:
         if not self.permissions:

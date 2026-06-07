@@ -1,15 +1,16 @@
 """Deep tests for providers — retry, fallback, token counting edge cases."""
 
 import asyncio
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from providers.base import LLMResponse, StreamChunk
-from providers.retry import RetryConfig, async_retry
-from providers.fallback import FallbackProvider
-from providers.token_counter import TokenCounter
-from providers.factory import make_provider
+import pytest
+
 from config.schema import LLMConfig
+from providers.base import LLMResponse
+from providers.factory import make_provider
+from providers.fallback import FallbackProvider
+from providers.retry import RetryConfig, async_retry
+from providers.token_counter import TokenCounter
 
 
 class TestRetryMechanism:
@@ -73,8 +74,9 @@ class TestFallbackProvider:
     @pytest.mark.asyncio
     async def test_primary_succeeds(self):
         primary = MagicMock()
-        primary.chat = AsyncMock(return_value=LLMResponse(
-            content="from primary", stop_reason="end_turn"))
+        primary.chat = AsyncMock(
+            return_value=LLMResponse(content="from primary", stop_reason="end_turn")
+        )
         secondary = MagicMock()
         fallback = FallbackProvider([primary, secondary])
 
@@ -87,8 +89,9 @@ class TestFallbackProvider:
         primary = MagicMock()
         primary.chat = AsyncMock(side_effect=ConnectionError("primary down"))
         secondary = MagicMock()
-        secondary.chat = AsyncMock(return_value=LLMResponse(
-            content="from secondary", stop_reason="end_turn"))
+        secondary.chat = AsyncMock(
+            return_value=LLMResponse(content="from secondary", stop_reason="end_turn")
+        )
         fallback = FallbackProvider([primary, secondary])
 
         response = await fallback.chat([{"role": "user", "content": "hi"}])
@@ -130,10 +133,13 @@ class TestTokenCounter:
     def test_multimodal_content(self):
         counter = TokenCounter()
         msgs = [
-            {"role": "user", "content": [
-                {"type": "text", "text": "What's in this image?"},
-                {"type": "image_url", "image_url": {"url": "data:image/png;base64,abc123"}},
-            ]},
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": "What's in this image?"},
+                    {"type": "image_url", "image_url": {"url": "data:image/png;base64,abc123"}},
+                ],
+            },
         ]
         tokens = counter.estimate_messages(msgs)
         assert tokens > 5
@@ -148,38 +154,48 @@ class TestTokenCounter:
 class TestMakeProvider:
     def test_creates_openai_provider(self):
         import os
+
         # Clear proxy env vars that break httpx
         for k in list(os.environ.keys()):
-            if 'proxy' in k.lower():
+            if "proxy" in k.lower():
                 os.environ.pop(k, None)
-        config = LLMConfig(provider="openai", api_key="sk-test",
-                          base_url="https://api.openai.com/v1")
+        config = LLMConfig(
+            provider="openai", api_key="sk-test", base_url="https://api.openai.com/v1"
+        )
         # Import after clearing env
         from providers.openai_compat import OpenAICompatProvider
+
         provider = make_provider(config)
         assert isinstance(provider, OpenAICompatProvider)
 
     def test_creates_anthropic_provider(self):
-        config = LLMConfig(provider="anthropic", api_key="sk-test",
-                          base_url="https://api.deepseek.com/anthropic")
+        config = LLMConfig(
+            provider="anthropic", api_key="sk-test", base_url="https://api.deepseek.com/anthropic"
+        )
         from providers.anthropic import AnthropicProvider
+
         provider = make_provider(config)
         assert isinstance(provider, AnthropicProvider)
 
     def test_custom_treated_as_openai(self):
         import os
+
         for k in list(os.environ.keys()):
-            if 'proxy' in k.lower():
+            if "proxy" in k.lower():
                 os.environ.pop(k, None)
-        config = LLMConfig(provider="custom", api_key="sk-test",
-                          base_url="http://localhost:8000/v1")
+        config = LLMConfig(
+            provider="custom", api_key="sk-test", base_url="http://localhost:8000/v1"
+        )
         from providers.openai_compat import OpenAICompatProvider
+
         provider = make_provider(config)
         assert isinstance(provider, OpenAICompatProvider)
 
     def test_unknown_provider_raises(self):
         # Unknown provider should be caught by Pydantic validation first
         from pydantic import ValidationError
+
         with pytest.raises(ValidationError):
-            LLMConfig(provider="unknown_provider", api_key="sk-test",
-                     base_url="http://localhost:8000/v1")
+            LLMConfig(
+                provider="unknown_provider", api_key="sk-test", base_url="http://localhost:8000/v1"
+            )

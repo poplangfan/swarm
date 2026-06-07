@@ -12,8 +12,9 @@ _override_log_dir: str | None = None
 _override_chroma_dir: str | None = None
 
 
-def set_overrides(data: str | None = None, logs: str | None = None,
-                  chroma: str | None = None) -> None:
+def set_overrides(
+    data: str | None = None, logs: str | None = None, chroma: str | None = None
+) -> None:
     """Set global path overrides from configuration. Call once at startup."""
     global _override_data_dir, _override_log_dir, _override_chroma_dir
     if data is not None:

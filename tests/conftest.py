@@ -1,12 +1,13 @@
 """Shared test fixtures for Swarm."""
 
-import pytest
 import tempfile
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
 
-from bus.queue import MessageBus
+import pytest
+
 from agent.context import RequestContext
+from bus.queue import MessageBus
 from providers.base import LLMResponse
 
 
@@ -24,8 +25,7 @@ def bus():
 @pytest.fixture
 def mock_provider():
     p = MagicMock()
-    p.chat = AsyncMock(return_value=LLMResponse(
-        content="Mock response", stop_reason="end_turn"))
+    p.chat = AsyncMock(return_value=LLMResponse(content="Mock response", stop_reason="end_turn"))
     p.model = "gpt-4o"
     p.context_window = 128_000
     p._max_tokens = 4096
@@ -37,6 +37,9 @@ def mock_provider():
 @pytest.fixture
 def sample_ctx():
     return RequestContext(
-        trace_id="test-trace", chat_id="test_chat",
-        chat_type="p2p", user_id="test_user", message_id="test_msg",
+        trace_id="test-trace",
+        chat_id="test_chat",
+        chat_type="p2p",
+        user_id="test_user",
+        message_id="test_msg",
     )

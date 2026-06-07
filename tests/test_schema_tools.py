@@ -1,6 +1,5 @@
 """Tests for tool schema generation and validation."""
 
-import pytest
 from tools.schema import generate_tool_schema, validate_tool_args
 
 
@@ -45,7 +44,8 @@ class TestGenerateToolSchema:
 class TestValidateToolArgs:
     def test_valid_args(self):
         schema = generate_tool_schema(
-            name="add", description="Add numbers",
+            name="add",
+            description="Add numbers",
             properties={
                 "a": {"type": "integer", "description": "First number"},
                 "b": {"type": "integer", "description": "Second number"},
@@ -57,7 +57,8 @@ class TestValidateToolArgs:
 
     def test_missing_required(self):
         schema = generate_tool_schema(
-            name="search", description="Search",
+            name="search",
+            description="Search",
             properties={"query": {"type": "string"}},
             required=["query"],
         )
@@ -68,7 +69,8 @@ class TestValidateToolArgs:
 
     def test_wrong_type(self):
         schema = generate_tool_schema(
-            name="set_count", description="Set count",
+            name="set_count",
+            description="Set count",
             properties={"count": {"type": "integer"}},
             required=["count"],
         )
@@ -78,7 +80,8 @@ class TestValidateToolArgs:
 
     def test_extra_args_ok(self):
         schema = generate_tool_schema(
-            name="greet", description="Greet",
+            name="greet",
+            description="Greet",
             properties={"name": {"type": "string"}},
             required=["name"],
         )
@@ -87,7 +90,8 @@ class TestValidateToolArgs:
 
     def test_empty_args(self):
         schema = generate_tool_schema(
-            name="ping", description="Ping",
+            name="ping",
+            description="Ping",
             properties={},
         )
         errors = validate_tool_args({}, schema)

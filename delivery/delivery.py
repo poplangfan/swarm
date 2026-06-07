@@ -65,7 +65,6 @@ class Delivery:
 
     async def _worker(self, chat_id: str) -> None:
         """Worker coroutine that drains the queue for a specific chat_id."""
-        import structlog
         queue = self._queues[chat_id]
         while True:
             try:
@@ -80,9 +79,11 @@ class Delivery:
             # Send with retry
             delivered = await self._send_with_retry(msg)
             if not delivered:
-                logger.error("delivery_failed_permanently",
-                             chat_id=chat_id,
-                             content_preview=str(msg.content)[:100])
+                logger.error(
+                    "delivery_failed_permanently",
+                    chat_id=chat_id,
+                    content_preview=str(msg.content)[:100],
+                )
 
     async def _send_with_retry(self, msg: OutboundMessage) -> bool:
         """Attempt to send a message with exponential backoff retry.
@@ -96,14 +97,13 @@ class Delivery:
                 await self._send_fn(msg)
                 return True
             except Exception as e:
-                logger.warning("delivery_attempt_failed",
-                               attempt=attempt,
-                               chat_id=msg.chat_id,
-                               error=str(e))
+                logger.warning(
+                    "delivery_attempt_failed", attempt=attempt, chat_id=msg.chat_id, error=str(e)
+                )
 
             if attempt < self._config.max_retries:
                 delay = min(
-                    self._config.base_delay * (2 ** attempt),
+                    self._config.base_delay * (2**attempt),
                     self._config.max_delay,
                 )
                 await asyncio.sleep(delay)

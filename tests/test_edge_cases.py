@@ -1,12 +1,12 @@
 """Edge case and boundary tests for core components."""
 
-import asyncio
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 from agent.loop import AgentLoop
 from agent.runner import AgentRunner, AgentRunSpec
-from bus.queue import MessageBus, InboundMessage
+from bus.queue import MessageBus
 from providers.base import LLMResponse
 
 
@@ -25,13 +25,18 @@ class TestAgentRunnerEdgeCases:
     @pytest.mark.asyncio
     async def test_max_iterations_boundary(self, mock_provider):
         """Exactly at max_iterations, should stop with warning."""
-        mock_provider.chat = AsyncMock(return_value=LLMResponse(
-            content=None, stop_reason="tool_calls",
-            tool_calls=[{
-                "id": "t1",
-                "function": {"name": "unknown_tool", "arguments": "{}"},
-            }],
-        ))
+        mock_provider.chat = AsyncMock(
+            return_value=LLMResponse(
+                content=None,
+                stop_reason="tool_calls",
+                tool_calls=[
+                    {
+                        "id": "t1",
+                        "function": {"name": "unknown_tool", "arguments": "{}"},
+                    }
+                ],
+            )
+        )
         runner = AgentRunner(mock_provider)
         spec = AgentRunSpec(
             initial_messages=[{"role": "user", "content": "test"}],
@@ -48,9 +53,12 @@ class TestAgentRunnerEdgeCases:
     @pytest.mark.asyncio
     async def test_very_long_content(self, mock_provider):
         """Very long user messages should be handled gracefully."""
-        mock_provider.chat = AsyncMock(return_value=LLMResponse(
-            content="Short reply", stop_reason="end_turn",
-        ))
+        mock_provider.chat = AsyncMock(
+            return_value=LLMResponse(
+                content="Short reply",
+                stop_reason="end_turn",
+            )
+        )
         runner = AgentRunner(mock_provider)
 
         long_msg = "x" * 100_000  # 100KB message
@@ -74,9 +82,12 @@ class TestAgentRunnerEdgeCases:
     @pytest.mark.asyncio
     async def test_none_content_response(self, mock_provider):
         """LLM returning None content should not crash."""
-        mock_provider.chat = AsyncMock(return_value=LLMResponse(
-            content=None, stop_reason="end_turn",
-        ))
+        mock_provider.chat = AsyncMock(
+            return_value=LLMResponse(
+                content=None,
+                stop_reason="end_turn",
+            )
+        )
         runner = AgentRunner(mock_provider)
         spec = AgentRunSpec(
             initial_messages=[{"role": "user", "content": "hi"}],
@@ -93,21 +104,25 @@ class TestAgentLoopEdgeCases:
         """Empty string message should not crash."""
         bus = MessageBus()
         loop = AgentLoop(bus=bus, provider=mock_provider, workspace=".")
-        result = await loop.process_direct("", session_key="test:empty")
+        _ = await loop.process_direct("", session_key="test:empty")
         # Empty message should not crash — may return None or empty response
         assert True  # Reached here without exception
 
     @pytest.mark.asyncio
     async def test_very_long_chat_id(self, mock_provider):
         """Very long chat IDs should not break session handling."""
-        mock_provider.chat = AsyncMock(return_value=LLMResponse(
-            content="OK", stop_reason="end_turn",
-        ))
+        mock_provider.chat = AsyncMock(
+            return_value=LLMResponse(
+                content="OK",
+                stop_reason="end_turn",
+            )
+        )
         bus = MessageBus()
         loop = AgentLoop(bus=bus, provider=mock_provider, workspace=".")
         long_chat_id = "oc_" + "x" * 500
         result = await loop.process_direct(
-            "hello", session_key=f"feishu:{long_chat_id}",
+            "hello",
+            session_key=f"feishu:{long_chat_id}",
             chat_id=long_chat_id,
         )
         assert result is not None
@@ -115,9 +130,12 @@ class TestAgentLoopEdgeCases:
     @pytest.mark.asyncio
     async def test_unicode_content(self, mock_provider):
         """Unicode, emoji, and special characters should be handled."""
-        mock_provider.chat = AsyncMock(return_value=LLMResponse(
-            content=" OK!", stop_reason="end_turn",
-        ))
+        mock_provider.chat = AsyncMock(
+            return_value=LLMResponse(
+                content=" OK!",
+                stop_reason="end_turn",
+            )
+        )
         bus = MessageBus()
         loop = AgentLoop(bus=bus, provider=mock_provider, workspace=".")
         result = await loop.process_direct(
@@ -139,9 +157,12 @@ class TestAgentLoopEdgeCases:
     @pytest.mark.asyncio
     async def test_unknown_command_not_shortcut(self, mock_provider):
         """Unknown /command should NOT be treated as a command shortcut."""
-        mock_provider.chat = AsyncMock(return_value=LLMResponse(
-            content="I don't know that command", stop_reason="end_turn",
-        ))
+        mock_provider.chat = AsyncMock(
+            return_value=LLMResponse(
+                content="I don't know that command",
+                stop_reason="end_turn",
+            )
+        )
         bus = MessageBus()
         loop = AgentLoop(bus=bus, provider=mock_provider, workspace=".")
         result = await loop.process_direct("/unknown_command", session_key="test:cmd")

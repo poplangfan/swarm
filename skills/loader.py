@@ -24,12 +24,13 @@ import yaml
 
 logger = structlog.get_logger(__name__)
 
-FRONTMATTER_RE = re.compile(r'^---\s*\r?\n(.*?)\r?\n---\s*\r?\n', re.DOTALL)
+FRONTMATTER_RE = re.compile(r"^---\s*\r?\n(.*?)\r?\n---\s*\r?\n", re.DOTALL)
 
 
 @dataclass
 class Skill:
     """A loaded skill definition."""
+
     name: str
     description: str = ""
     content: str = ""
@@ -63,18 +64,20 @@ class SkillsLoader:
 
         # Warn if we created a new directory or loaded no skills from a non-empty dir
         if not existed_before:
-            logger.warning("skills_dir_created",
-                           path=str(self._skills_dir),
-                           hint="Directory did not exist; check skills path config")
-        elif self.skill_count == 0:
-            has_subdirs = any(
-                p.is_dir() for p in self._skills_dir.iterdir()
+            logger.warning(
+                "skills_dir_created",
+                path=str(self._skills_dir),
+                hint="Directory did not exist; check skills path config",
             )
+        elif self.skill_count == 0:
+            has_subdirs = any(p.is_dir() for p in self._skills_dir.iterdir())
             if has_subdirs:
                 # Directory has subdirectories but no valid SKILL.md files found
-                logger.warning("skills_dir_no_valid_skills",
-                               path=str(self._skills_dir),
-                               hint="Directory exists but no valid SKILL.md files found")
+                logger.warning(
+                    "skills_dir_no_valid_skills",
+                    path=str(self._skills_dir),
+                    hint="Directory exists but no valid SKILL.md files found",
+                )
 
     def _load_all(self) -> None:
         """Scan the skills directory and load all skills."""
@@ -103,7 +106,7 @@ class SkillsLoader:
             return None
 
         meta = yaml.safe_load(match.group(1)) or {}
-        content = text[match.end():].strip()
+        content = text[match.end() :].strip()
 
         return Skill(
             name=meta.get("name", path.parent.name),
@@ -140,7 +143,8 @@ class SkillsLoader:
         """Build a summary of available (non-always) skills."""
         exclude = exclude or set()
         available = [
-            s for name, s in self._skills.items()
+            s
+            for name, s in self._skills.items()
             if name not in exclude and name not in self._always_skills
         ]
         if not available:
@@ -153,8 +157,12 @@ class SkillsLoader:
     def list_skills(self) -> list[dict[str, Any]]:
         """List all loaded skills with metadata."""
         return [
-            {"name": s.name, "description": s.description,
-             "always": s.always, "permissions": s.permissions}
+            {
+                "name": s.name,
+                "description": s.description,
+                "always": s.always,
+                "permissions": s.permissions,
+            }
             for s in self._skills.values()
         ]
 

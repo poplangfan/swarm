@@ -1,9 +1,9 @@
 """Tests for memory compressor and knowledge graph."""
 
 import pytest
-from pathlib import Path
+
 from memory.compressor import ContextCompressor
-from memory.knowledge_graph import KnowledgeGraph, Entity, Relation
+from memory.knowledge_graph import Entity, KnowledgeGraph, Relation
 
 
 class TestContextCompressor:
@@ -45,7 +45,7 @@ class TestContextCompressor:
         for tm in tool_msgs:
             content = str(tm.get("content", ""))
             # Either compressed (contains marker) or truncated (shorter)
-            assert ("compressed" in content or len(content) <= 5000)
+            assert "compressed" in content or len(content) <= 5000
 
     def test_estimate_tokens(self):
         compressor = ContextCompressor()

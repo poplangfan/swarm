@@ -29,8 +29,13 @@ class FeishuFileTool(ToolBase):
         "required": ["action"],
     }
 
-    def __init__(self, app_id: str = "", app_secret: str = "", domain: str = "feishu",
-                 token_manager: FeishuTokenManager | None = None):
+    def __init__(
+        self,
+        app_id: str = "",
+        app_secret: str = "",
+        domain: str = "feishu",
+        token_manager: FeishuTokenManager | None = None,
+    ):
         self._app_id = app_id
         self._app_secret = app_secret
         self._domain = domain
@@ -46,7 +51,11 @@ class FeishuFileTool(ToolBase):
         page_size = min(int(args.get("page_size", 10)), 50)
         if action == "list":
             token = ctx.user_token
-            base = "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+            base = (
+                "https://open.feishu.cn"
+                if self._domain == "feishu"
+                else "https://open.larksuite.com"
+            )
             try:
                 async with httpx.AsyncClient() as client:
                     resp = await client.get(
@@ -59,15 +68,21 @@ class FeishuFileTool(ToolBase):
                     if data.get("code") != 0:
                         return tool_result(f"Drive API error: {data.get('msg')}")
                     files = data.get("data", {}).get("files", [])
-                    lines = [f"{f.get('name', 'unknown')} ({f.get('type', 'file')})"
-                             for f in files[:page_size]]
-                    return tool_result(f"Found {len(files)} files", files="\n".join(lines) if lines else "No files")
+                    lines = [
+                        f"{f.get('name', 'unknown')} ({f.get('type', 'file')})"
+                        for f in files[:page_size]
+                    ]
+                    return tool_result(
+                        f"Found {len(files)} files", files="\n".join(lines) if lines else "No files"
+                    )
             except Exception as e:
                 return tool_result(f"Drive API error: {e}")
         return tool_result(f"Action '{action}' requires user authorization")
 
     async def _app_action(self, action: str, args: dict) -> str:
         if action == "list":
-            return tool_result("File listing requires user OAuth authorization. "
-                             "Please authorize the app to access your files.")
+            return tool_result(
+                "File listing requires user OAuth authorization. "
+                "Please authorize the app to access your files."
+            )
         return tool_result(f"Action '{action}' not available without user authorization")

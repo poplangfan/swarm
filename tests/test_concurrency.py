@@ -1,12 +1,14 @@
 """Concurrency safety tests — verify multi-tenant isolation."""
 
 import asyncio
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from bus.queue import MessageBus
+
+import pytest
+
 from agent.loop import AgentLoop
-from session.manager import SessionManager
+from bus.queue import MessageBus
 from providers.base import LLMResponse
+from session.manager import SessionManager
 
 
 class TestConcurrencySafety:
@@ -42,8 +44,7 @@ class TestConcurrencySafety:
         provider.generation.max_tokens = 4096
 
         bus = MessageBus()
-        loop = AgentLoop(bus=bus, provider=provider, workspace=temp_dir,
-                        sessions=sessions)
+        loop = AgentLoop(bus=bus, provider=provider, workspace=temp_dir, sessions=sessions)
 
         # 10 different chat_ids
         chat_ids = [f"oc_chat_{i}" for i in range(10)]
@@ -81,6 +82,7 @@ class TestConcurrencySafety:
             return LLMResponse(content="OK", stop_reason="end_turn")
 
         import time
+
         provider = MagicMock()
         provider.chat = AsyncMock(side_effect=sequential_chat)
         provider.model = "gpt-4o"
@@ -90,21 +92,22 @@ class TestConcurrencySafety:
         provider.generation.max_tokens = 4096
 
         bus = MessageBus()
-        loop = AgentLoop(bus=bus, provider=provider, workspace=temp_dir,
-                        sessions=sessions)
+        loop = AgentLoop(bus=bus, provider=provider, workspace=temp_dir, sessions=sessions)
 
         key = "feishu:oc_same_chat"
         # 5 concurrent requests to same session
-        results = await asyncio.gather(*[
-            loop.process_direct(f"msg {i}", session_key=key, chat_id="oc_same_chat")
-            for i in range(5)
-        ])
+        results = await asyncio.gather(
+            *[
+                loop.process_direct(f"msg {i}", session_key=key, chat_id="oc_same_chat")
+                for i in range(5)
+            ]
+        )
 
         assert len(results) == 5
         # All calls happened — order should be strictly sequential due to Lock
         assert len(call_order) == 5
         for i in range(1, len(call_order)):
-            assert call_order[i] >= call_order[i-1], "Calls should be in order"
+            assert call_order[i] >= call_order[i - 1], "Calls should be in order"
 
     @pytest.mark.asyncio
     async def test_chroma_isolation_by_chat_id(self, temp_dir):

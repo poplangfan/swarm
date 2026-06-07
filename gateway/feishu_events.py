@@ -61,12 +61,11 @@ class FeishuEventDispatcher:
             for handler in self._handlers.get(event_key, []):
                 try:
                     result = handler(event)
-                    if hasattr(result, '__await__'):
+                    if hasattr(result, "__await__"):
                         await result
                     handled = True
                 except Exception as e:
-                    logger.error("event_handler_error",
-                                 event_type=event_type, error=str(e))
+                    logger.error("event_handler_error", event_type=event_type, error=str(e))
 
         if not handled:
             logger.debug("unhandled_event", event_type=event_type)
@@ -75,24 +74,24 @@ class FeishuEventDispatcher:
 
     def _get_event_type(self, event: Any) -> str:
         """Extract event type from various event formats."""
-        if hasattr(event, 'type'):
+        if hasattr(event, "type"):
             return str(event.type)
         if isinstance(event, dict):
-            return event.get('type', event.get('schema', ''))
+            return event.get("type", event.get("schema", ""))
         return str(event)
 
     def _is_app_ticket(self, event: Any) -> bool:
         """Check if the event is an app_ticket push."""
         event_type = self._get_event_type(event)
-        return 'app_ticket' in event_type.lower()
+        return "app_ticket" in event_type.lower()
 
     def _store_app_ticket(self, event: Any) -> None:
         """Store the app_ticket for event signature verification."""
         ticket = None
-        if hasattr(event, 'event'):
-            ticket = getattr(event.event, 'app_ticket', None)
+        if hasattr(event, "event"):
+            ticket = getattr(event.event, "app_ticket", None)
         elif isinstance(event, dict):
-            ticket = event.get('event', {}).get('app_ticket')
+            ticket = event.get("event", {}).get("app_ticket")
 
         if ticket:
             self._app_ticket = ticket
@@ -119,8 +118,9 @@ class FeishuEventDispatcher:
         """Get the cached app_ticket for API operations that need it."""
         return self._app_ticket
 
-    def _verify_signature_manual(self, timestamp: str, nonce: str,
-                                  body: str, signature: str) -> bool:
+    def _verify_signature_manual(
+        self, timestamp: str, nonce: str, body: str, signature: str
+    ) -> bool:
         """Manual SHA256 signature verification."""
         if not self._app_ticket:
             return True
@@ -138,31 +138,31 @@ def extract_message_data(event: Any) -> dict[str, Any] | None:
     msg_data = {}
 
     if isinstance(event, dict):
-        msg_data = event.get('event', event)
-    elif hasattr(event, 'event'):
+        msg_data = event.get("event", event)
+    elif hasattr(event, "event"):
         msg_data = event.event or {}
 
-    message = msg_data.get('message', {})
+    message = msg_data.get("message", {})
     if not message:
         return None
 
-    sender = msg_data.get('sender', {})
-    sender_id = sender.get('sender_id', {})
+    sender = msg_data.get("sender", {})
+    sender_id = sender.get("sender_id", {})
     if isinstance(sender_id, dict):
-        sender_id = sender_id.get('open_id', '')
+        sender_id = sender_id.get("open_id", "")
     elif not isinstance(sender_id, str):
         sender_id = str(sender_id)
 
     return {
-        'msg_type': message.get('message_type', 'text'),
-        'content': message.get('content', '{}'),
-        'msg_id': message.get('message_id', ''),
-        'chat_id': message.get('chat_id', ''),
-        'chat_type': message.get('chat_type', 'p2p'),
-        'sender_id': sender_id,
-        'root_id': message.get('root_id', ''),
-        'parent_id': message.get('parent_id', ''),
-        'mentions': message.get('mentions', []),
+        "msg_type": message.get("message_type", "text"),
+        "content": message.get("content", "{}"),
+        "msg_id": message.get("message_id", ""),
+        "chat_id": message.get("chat_id", ""),
+        "chat_type": message.get("chat_type", "p2p"),
+        "sender_id": sender_id,
+        "root_id": message.get("root_id", ""),
+        "parent_id": message.get("parent_id", ""),
+        "mentions": message.get("mentions", []),
     }
 
 
@@ -170,18 +170,18 @@ def extract_reaction_data(event: Any) -> dict[str, Any] | None:
     """Extract reaction data from a reaction event."""
     msg_data = {}
     if isinstance(event, dict):
-        msg_data = event.get('event', event)
-    elif hasattr(event, 'event'):
+        msg_data = event.get("event", event)
+    elif hasattr(event, "event"):
         msg_data = event.event or {}
 
-    reaction = msg_data.get('reaction', {})
+    reaction = msg_data.get("reaction", {})
     if not reaction:
         return None
 
     return {
-        'message_id': reaction.get('message_id', ''),
-        'reaction_type': reaction.get('reaction_type', {}).get('emoji_type', ''),
-        'user_id': reaction.get('user_id', {}).get('open_id', ''),
+        "message_id": reaction.get("message_id", ""),
+        "reaction_type": reaction.get("reaction_type", {}).get("emoji_type", ""),
+        "user_id": reaction.get("user_id", {}).get("open_id", ""),
     }
 
 
@@ -189,17 +189,19 @@ def extract_member_event_data(event: Any) -> dict[str, Any] | None:
     """Extract member join/leave data from a chat member event."""
     msg_data = {}
     if isinstance(event, dict):
-        msg_data = event.get('event', event)
-    elif hasattr(event, 'event'):
+        msg_data = event.get("event", event)
+    elif hasattr(event, "event"):
         msg_data = event.event or {}
 
-    chat_id = msg_data.get('chat_id', '')
-    users = msg_data.get('users', [])
+    chat_id = msg_data.get("chat_id", "")
+    users = msg_data.get("users", [])
 
     return {
-        'chat_id': chat_id,
-        'users': [
-            {'name': u.get('name', ''), 'open_id': u.get('user_id', {}).get('open_id', '')}
+        "chat_id": chat_id,
+        "users": [
+            {"name": u.get("name", ""), "open_id": u.get("user_id", {}).get("open_id", "")}
             for u in users
-        ] if isinstance(users, list) else [],
+        ]
+        if isinstance(users, list)
+        else [],
     }

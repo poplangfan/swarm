@@ -50,6 +50,7 @@ class TokenStore:
 
     def _encrypt(self, plaintext: str) -> str:
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
         nonce = os.urandom(12)
         aesgcm = AESGCM(self._key)
         ciphertext = aesgcm.encrypt(nonce, plaintext.encode("utf-8"), None)
@@ -57,17 +58,20 @@ class TokenStore:
 
     def _decrypt(self, encoded: str) -> str:
         from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
         combined = base64.b64decode(encoded)
         nonce, ciphertext = combined[:12], combined[12:]
         aesgcm = AESGCM(self._key)
         return aesgcm.decrypt(nonce, ciphertext, None).decode("utf-8")
 
     def save(self, user_id: str, token: TokenData) -> None:
-        data = json.dumps({
-            "access_token": token.access_token,
-            "refresh_token": token.refresh_token,
-            "expires_at": token.expires_at,
-        })
+        data = json.dumps(
+            {
+                "access_token": token.access_token,
+                "refresh_token": token.refresh_token,
+                "expires_at": token.expires_at,
+            }
+        )
         encrypted = self._encrypt(data)
         with sqlite3.connect(str(self._db_path)) as conn:
             conn.execute(

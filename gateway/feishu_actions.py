@@ -31,8 +31,11 @@ class CardActionHandler:
         self._handlers: dict[str, dict[str, ActionHandler]] = {}
 
     def register(
-        self, action_id: str, handler: callable,
-        label: str = "", description: str = "",
+        self,
+        action_id: str,
+        handler: callable,
+        label: str = "",
+        description: str = "",
     ) -> None:
         """Register a handler for a specific card action.
 
@@ -74,10 +77,11 @@ class CardActionHandler:
 
         try:
             result = handler(action_value, chat_id, user_id)
-            if hasattr(result, '__await__'):
+            if hasattr(result, "__await__"):
                 await result
-            logger.info("card_action_handled", action_id=action_id,
-                        chat_id=chat_id, user_id=user_id)
+            logger.info(
+                "card_action_handled", action_id=action_id, chat_id=chat_id, user_id=user_id
+            )
             return True
         except Exception as e:
             logger.error("card_action_error", action_id=action_id, error=str(e))
@@ -86,12 +90,12 @@ class CardActionHandler:
     def _extract_action_data(self, event: Any) -> dict[str, Any] | None:
         """Extract action data from a card.action.trigger event."""
         msg_data = {}
-        if hasattr(event, 'event'):
+        if hasattr(event, "event"):
             msg_data = event.event or {}
         elif isinstance(event, dict):
             msg_data = event
 
-        action = msg_data.get('action', {})
+        action = msg_data.get("action", {})
         if not action:
             return None
 
@@ -103,16 +107,16 @@ class CardActionHandler:
             "message_id": msg_data.get("open_message_id", ""),
         }
 
-    async def route_as_message(self, action_id: str, action_data: dict,
-                               chat_id: str, user_id: str) -> None:
+    async def route_as_message(
+        self, action_id: str, action_data: dict, chat_id: str, user_id: str
+    ) -> None:
         """Route a card action as a synthetic inbound message.
 
         This allows card interactions to trigger AgentLoop processing
         as if the user had sent a regular message.
         """
         synthetic_content = (
-            f"[Card Action: {action_id}]\n"
-            f"Data: {json.dumps(action_data, ensure_ascii=False)}"
+            f"[Card Action: {action_id}]\nData: {json.dumps(action_data, ensure_ascii=False)}"
         )
 
         msg = InboundMessage(

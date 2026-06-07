@@ -6,11 +6,11 @@ import asyncio
 import json
 import time
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Callable
+from typing import Any, Callable
 
 import structlog
 
-from providers.base import LLMProvider, LLMResponse, StreamChunk
+from providers.base import LLMProvider, LLMResponse
 
 logger = structlog.get_logger(__name__)
 
@@ -21,6 +21,7 @@ _MAX_INJECTIONS_PER_TURN = 5
 @dataclass
 class AgentRunSpec:
     """Specification for a single agent run."""
+
     initial_messages: list[dict[str, Any]]
     tools: Any | None = None
     model: str = "gpt-4o"
@@ -47,6 +48,7 @@ class AgentRunSpec:
 @dataclass
 class AgentRunResult:
     """Result from a completed agent run."""
+
     final_content: str | None
     tools_used: list[str] = field(default_factory=list)
     messages: list[dict[str, Any]] = field(default_factory=list)
@@ -118,10 +120,12 @@ class AgentRunner:
             # waiting 180s for all retries to exhaust.
             response = None
             try:
-                if spec.stream_callback and hasattr(self.provider, 'stream'):
+                if spec.stream_callback and hasattr(self.provider, "stream"):
                     response = await asyncio.wait_for(
                         self._streaming_call(
-                            messages, tool_defs if tool_names else None, spec,
+                            messages,
+                            tool_defs if tool_names else None,
+                            spec,
                         ),
                         timeout=spec.llm_timeout_s,
                     )
@@ -135,8 +139,10 @@ class AgentRunner:
                 stop_reason = "error"
                 return AgentRunResult(
                     final_content="Sorry, the request timed out. Please try again.",
-                    stop_reason=stop_reason, usage=total_usage,
-                    tools_used=tools_used, had_injections=had_injections,
+                    stop_reason=stop_reason,
+                    usage=total_usage,
+                    tools_used=tools_used,
+                    had_injections=had_injections,
                     latency_ms=(time.time() - t_start) * 1000,
                 )
             except Exception as e:
@@ -144,8 +150,10 @@ class AgentRunner:
                 stop_reason = "error"
                 return AgentRunResult(
                     final_content=spec.error_message,
-                    stop_reason=stop_reason, usage=total_usage,
-                    tools_used=tools_used, had_injections=had_injections,
+                    stop_reason=stop_reason,
+                    usage=total_usage,
+                    tools_used=tools_used,
+                    had_injections=had_injections,
                     latency_ms=(time.time() - t_start) * 1000,
                 )
 
@@ -166,20 +174,24 @@ class AgentRunner:
                 # Persist checkpoint before tool execution
                 if spec.checkpoint_callback:
                     try:
-                        await spec.checkpoint_callback({
-                            "assistant_message": {
-                                "role": "assistant", "content": response.content,
-                                "tool_calls": response.tool_calls,
-                            },
-                            "completed_tool_results": [],
-                            "pending_tool_calls": response.tool_calls,
-                        })
+                        await spec.checkpoint_callback(
+                            {
+                                "assistant_message": {
+                                    "role": "assistant",
+                                    "content": response.content,
+                                    "tool_calls": response.tool_calls,
+                                },
+                                "completed_tool_results": [],
+                                "pending_tool_calls": response.tool_calls,
+                            }
+                        )
                     except Exception:
                         pass
 
                 # Add assistant message with tool calls
                 assistant_msg: dict[str, Any] = {
-                    "role": "assistant", "content": response.content,
+                    "role": "assistant",
+                    "content": response.content,
                 }
                 if response.tool_calls:
                     assistant_msg["tool_calls"] = response.tool_calls
@@ -198,14 +210,15 @@ class AgentRunner:
                     tools_used.append(tool_name)
 
                     tool_result_text = await self._execute_tool(
-                        spec, tool_name, args,
+                        spec,
+                        tool_name,
+                        args,
                     )
 
                     # Truncate long results
                     if len(tool_result_text) > spec.max_tool_result_chars:
                         tool_result_text = (
-                            tool_result_text[:spec.max_tool_result_chars]
-                            + "\n... [truncated]"
+                            tool_result_text[: spec.max_tool_result_chars] + "\n... [truncated]"
                         )
 
                     tool_msg: dict[str, Any] = {
@@ -220,11 +233,13 @@ class AgentRunner:
                 # Update checkpoint
                 if spec.checkpoint_callback:
                     try:
-                        await spec.checkpoint_callback({
-                            "assistant_message": assistant_msg,
-                            "completed_tool_results": completed_results,
-                            "pending_tool_calls": [],
-                        })
+                        await spec.checkpoint_callback(
+                            {
+                                "assistant_message": assistant_msg,
+                                "completed_tool_results": completed_results,
+                                "pending_tool_calls": [],
+                            }
+                        )
                     except Exception:
                         pass
 
@@ -249,18 +264,25 @@ class AgentRunner:
             stop_reason = response.stop_reason if response else "end_turn"
             return AgentRunResult(
                 final_content=response.content if response else None,
-                tools_used=tools_used, messages=messages,
-                stop_reason=stop_reason, had_injections=had_injections,
+                tools_used=tools_used,
+                messages=messages,
+                stop_reason=stop_reason,
+                had_injections=had_injections,
                 usage=total_usage,
-                reasoning_content="\n".join(reasoning_accumulated) if reasoning_accumulated else None,
+                reasoning_content="\n".join(reasoning_accumulated)
+                if reasoning_accumulated
+                else None,
                 latency_ms=(time.time() - t_start) * 1000,
             )
 
         # ── Max iterations reached ──────────────────────────
         logger.warning("max_iterations_reached", max_iterations=spec.max_iterations)
         return AgentRunResult(
-            final_content=None, tools_used=tools_used, messages=messages,
-            stop_reason="max_iterations", had_injections=had_injections,
+            final_content=None,
+            tools_used=tools_used,
+            messages=messages,
+            stop_reason="max_iterations",
+            had_injections=had_injections,
             usage=total_usage,
             latency_ms=(time.time() - t_start) * 1000,
         )
@@ -281,7 +303,10 @@ class AgentRunner:
             return f"Error executing '{name}': {e}"
 
     async def _streaming_call(
-        self, messages: list[dict], tools: list[dict] | None, spec: AgentRunSpec,
+        self,
+        messages: list[dict],
+        tools: list[dict] | None,
+        spec: AgentRunSpec,
     ) -> LLMResponse:
         """Execute a streaming LLM call, forwarding deltas to callback.
 
@@ -361,7 +386,9 @@ class AgentRunner:
         reasoning = "".join(reasoning_parts) if reasoning_parts else None
 
         return LLMResponse(
-            content=content, stop_reason=finish_reason,
-            tool_calls=tool_calls, usage=usage_info,
+            content=content,
+            stop_reason=finish_reason,
+            tool_calls=tool_calls,
+            usage=usage_info,
             reasoning_content=reasoning,
         )

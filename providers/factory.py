@@ -17,6 +17,7 @@ def make_provider(config: LLMConfig) -> LLMProvider:
             fb_config = config.model_copy(update=fb_cfg)
             fallbacks.append(_make_single_provider(fb_config))
         from providers.fallback import FallbackProvider
+
         return FallbackProvider([primary] + fallbacks)
 
     return primary
@@ -28,16 +29,22 @@ def _make_single_provider(config: LLMConfig) -> LLMProvider:
 
     if provider_type in ("openai", "custom"):
         from providers.openai_compat import OpenAICompatProvider
+
         return OpenAICompatProvider(
-            api_key=config.api_key, base_url=config.base_url,
-            model=config.model, max_tokens=config.max_tokens,
+            api_key=config.api_key,
+            base_url=config.base_url,
+            model=config.model,
+            max_tokens=config.max_tokens,
             temperature=config.temperature,
         )
     elif provider_type == "anthropic":
         from providers.anthropic import AnthropicProvider
+
         return AnthropicProvider(
-            api_key=config.api_key, base_url=config.base_url or None,
-            model=config.model, max_tokens=config.max_tokens,
+            api_key=config.api_key,
+            base_url=config.base_url or None,
+            model=config.model,
+            max_tokens=config.max_tokens,
             temperature=config.temperature,
         )
     else:

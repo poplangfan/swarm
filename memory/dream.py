@@ -14,9 +14,9 @@ from typing import Any
 
 import structlog
 
-from memory.store import ChromaMemoryStore
 from memory.short_term import ShortTermMemory
-from providers.base import LLMProvider, LLMResponse
+from memory.store import ChromaMemoryStore
+from providers.base import LLMProvider
 
 logger = structlog.get_logger(__name__)
 
@@ -94,8 +94,9 @@ Output ONLY a JSON list. Example: [{{"fact": "...", "importance": 0.8, "entities
             if last_id is not None:
                 await self._short_term.mark_consolidated(chat_id, last_id)
 
-            logger.info("dream_consolidation_complete",
-                        chat_id=chat_id, facts_extracted=stored_count)
+            logger.info(
+                "dream_consolidation_complete", chat_id=chat_id, facts_extracted=stored_count
+            )
             return {"consolidated": True, "facts_extracted": stored_count, "error": None}
 
         except Exception as e:
@@ -164,7 +165,7 @@ Output ONLY a JSON list. Example: [{{"fact": "...", "importance": 0.8, "entities
             fence_end = text.find("```", fence_start + 7)
             if fence_end > fence_start:
                 try:
-                    inner = text[fence_start + 7:fence_end].strip()
+                    inner = text[fence_start + 7 : fence_end].strip()
                     result = json.loads(inner)
                     return result if isinstance(result, list) else None
                 except (json.JSONDecodeError, ValueError):
@@ -186,10 +187,15 @@ Output ONLY a JSON list. Example: [{{"fact": "...", "importance": 0.8, "entities
         sentences = [s.strip() for s in conversation.split("\n") if s.strip() and len(s) > 20]
         for i, sent in enumerate(sentences[:10]):
             # Extract sentences that look like factual statements
-            if any(kw in sent.lower() for kw in ["is ", "are ", "works ", "project", "need", "want", "like ", "use"]):
-                facts.append({
-                    "fact": sent[:300],
-                    "importance": 0.5 + (0.1 * (len(sentences) - i) / max(1, len(sentences))),
-                    "entities": [],
-                })
+            if any(
+                kw in sent.lower()
+                for kw in ["is ", "are ", "works ", "project", "need", "want", "like ", "use"]
+            ):
+                facts.append(
+                    {
+                        "fact": sent[:300],
+                        "importance": 0.5 + (0.1 * (len(sentences) - i) / max(1, len(sentences))),
+                        "entities": [],
+                    }
+                )
         return facts

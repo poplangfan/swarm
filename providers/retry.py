@@ -31,17 +31,24 @@ def _is_retryable(exc: Exception) -> bool:
     if isinstance(exc, (asyncio.TimeoutError, ConnectionError, TimeoutError, OSError)):
         return True
     # OpenAI SDK: APIStatusError has status_code
-    status = getattr(exc, 'status_code', None)
+    status = getattr(exc, "status_code", None)
     if status is not None and (status >= 500 or status == 429):
         return True
     # Anthropic SDK: APIStatusError uses http_status
-    http_status = getattr(exc, 'http_status', None)
+    http_status = getattr(exc, "http_status", None)
     if http_status is not None and (http_status >= 500 or http_status == 429):
         return True
     # httpx / requests transport errors
     exc_name = type(exc).__name__
-    if exc_name in ('ConnectError', 'ReadError', 'WriteError', 'RemoteProtocolError',
-                     'ReadTimeout', 'ConnectTimeout', 'PoolTimeout'):
+    if exc_name in (
+        "ConnectError",
+        "ReadError",
+        "WriteError",
+        "RemoteProtocolError",
+        "ReadTimeout",
+        "ConnectTimeout",
+        "PoolTimeout",
+    ):
         return True
     return False
 
@@ -74,7 +81,7 @@ def async_retry(config: RetryConfig | None = None):
                             error=str(e),
                         )
                         raise
-                    delay = min(config.base_delay * (2 ** attempt), config.max_delay)
+                    delay = min(config.base_delay * (2**attempt), config.max_delay)
                     if config.jitter:
                         delay *= 0.5 + random.random()
                     logger.warning(
@@ -87,5 +94,7 @@ def async_retry(config: RetryConfig | None = None):
                     )
                     await asyncio.sleep(delay)
             raise last_exception  # type: ignore
+
         return wrapper
+
     return decorator

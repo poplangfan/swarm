@@ -57,7 +57,9 @@ class KnowledgeGraph:
         self._data_dir = Path(data_dir)
         self._data_dir.mkdir(parents=True, exist_ok=True)
         self._db_path = str(self._data_dir / "knowledge_graph.db")
-        _db_execute(self._db_path, """
+        _db_execute(
+            self._db_path,
+            """
             CREATE TABLE IF NOT EXISTS entities (
                 name TEXT PRIMARY KEY,
                 entity_type TEXT NOT NULL,
@@ -65,8 +67,11 @@ class KnowledgeGraph:
                 created_at REAL NOT NULL,
                 updated_at REAL NOT NULL
             )
-        """)
-        _db_execute(self._db_path, """
+        """,
+        )
+        _db_execute(
+            self._db_path,
+            """
             CREATE TABLE IF NOT EXISTS relations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 source TEXT NOT NULL,
@@ -75,61 +80,69 @@ class KnowledgeGraph:
                 weight REAL DEFAULT 1.0,
                 created_at REAL NOT NULL
             )
-        """)
-        _db_execute(self._db_path,
-                    "CREATE INDEX IF NOT EXISTS idx_rel_source ON relations(source)")
-        _db_execute(self._db_path,
-                    "CREATE INDEX IF NOT EXISTS idx_rel_target ON relations(target)")
+        """,
+        )
+        _db_execute(self._db_path, "CREATE INDEX IF NOT EXISTS idx_rel_source ON relations(source)")
+        _db_execute(self._db_path, "CREATE INDEX IF NOT EXISTS idx_rel_target ON relations(target)")
 
     async def add_entity(self, entity: Entity) -> None:
         now = time.time()
         await asyncio.to_thread(
-            _db_execute, self._db_path,
+            _db_execute,
+            self._db_path,
             "INSERT INTO entities (name, entity_type, properties_json, created_at, updated_at) "
             "VALUES (?, ?, ?, ?, ?) "
             "ON CONFLICT(name) DO UPDATE SET "
             "entity_type=excluded.entity_type, "
             "properties_json=excluded.properties_json, "
             "updated_at=excluded.updated_at",
-            (entity.name, entity.entity_type,
-             json.dumps(entity.properties), now, now),
+            (entity.name, entity.entity_type, json.dumps(entity.properties), now, now),
         )
 
     async def get_entity(self, name: str) -> Entity | None:
         rows = await asyncio.to_thread(
-            _db_query, self._db_path,
+            _db_query,
+            self._db_path,
             "SELECT name, entity_type, properties_json FROM entities WHERE name=?",
             (name,),
         )
         if not rows:
             return None
-        return Entity(name=rows[0][0], entity_type=rows[0][1],
-                     properties=json.loads(rows[0][2]))
+        return Entity(name=rows[0][0], entity_type=rows[0][1], properties=json.loads(rows[0][2]))
 
     async def add_relation(self, relation: Relation) -> None:
         await asyncio.to_thread(
-            _db_execute, self._db_path,
+            _db_execute,
+            self._db_path,
             "INSERT INTO relations (source, target, relation_type, weight, created_at) VALUES (?,?,?,?,?)",
-            (relation.source, relation.target, relation.relation_type,
-             relation.weight, time.time()),
+            (
+                relation.source,
+                relation.target,
+                relation.relation_type,
+                relation.weight,
+                time.time(),
+            ),
         )
 
     async def get_neighbors(self, entity_name: str, max_depth: int = 1) -> list[dict[str, Any]]:
         """Get all entities directly connected to the given entity."""
         rows = await asyncio.to_thread(
-            _db_query, self._db_path,
+            _db_query,
+            self._db_path,
             "SELECT source, target, relation_type, weight FROM relations WHERE source=? OR target=?",
             (entity_name, entity_name),
         )
         results = []
         for row in rows:
             neighbor = row[1] if row[0] == entity_name else row[0]
-            results.append({
-                "entity": entity_name,
-                "neighbor": neighbor,
-                "relation": row[2],
-                "weight": row[3],
-            })
+            results.append(
+                {
+                    "entity": entity_name,
+                    "neighbor": neighbor,
+                    "relation": row[2],
+                    "weight": row[3],
+                }
+            )
         return results
 
     async def search_entities(self, query: str, limit: int = 10) -> list[Entity]:
@@ -140,25 +153,24 @@ class KnowledgeGraph:
         # Escape LIKE wildcards so user input isn't interpreted as patterns
         safe_query = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         rows = await asyncio.to_thread(
-            _db_query, self._db_path,
-            f"SELECT name, entity_type, properties_json FROM entities "
-            f"WHERE name LIKE ? ESCAPE '\\' LIMIT ?",
+            _db_query,
+            self._db_path,
+            "SELECT name, entity_type, properties_json FROM entities "
+            "WHERE name LIKE ? ESCAPE '\\' LIMIT ?",
             (f"%{safe_query}%", limit),
         )
-        return [Entity(name=r[0], entity_type=r[1],
-                      properties=json.loads(r[2])) for r in rows]
+        return [Entity(name=r[0], entity_type=r[1], properties=json.loads(r[2])) for r in rows]
 
     async def get_all_entities(self, entity_type: str | None = None) -> list[Entity]:
         if entity_type:
             rows = await asyncio.to_thread(
-                _db_query, self._db_path,
+                _db_query,
+                self._db_path,
                 "SELECT name, entity_type, properties_json FROM entities WHERE entity_type=?",
                 (entity_type,),
             )
         else:
             rows = await asyncio.to_thread(
-                _db_query, self._db_path,
-                "SELECT name, entity_type, properties_json FROM entities"
+                _db_query, self._db_path, "SELECT name, entity_type, properties_json FROM entities"
             )
-        return [Entity(name=r[0], entity_type=r[1],
-                      properties=json.loads(r[2])) for r in rows]
+        return [Entity(name=r[0], entity_type=r[1], properties=json.loads(r[2])) for r in rows]

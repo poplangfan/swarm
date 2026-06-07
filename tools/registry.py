@@ -50,8 +50,9 @@ class ToolRegistry:
             defs.append(tool.get_definition())
         return defs
 
-    async def execute(self, name: str, args: dict[str, Any],
-                      ctx: RequestContext | None = None) -> str:
+    async def execute(
+        self, name: str, args: dict[str, Any], ctx: RequestContext | None = None
+    ) -> str:
         tool = self._tools.get(name)
         if tool is None:
             return tool_result(f"Error: unknown tool '{name}'")

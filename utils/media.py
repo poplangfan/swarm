@@ -8,14 +8,14 @@ from pathlib import Path
 
 def detect_image_mime(data: bytes) -> str | None:
     """Detect image MIME type from magic bytes."""
-    if data[:4] == b'\x89PNG':
-        return 'image/png'
-    if data[:2] == b'\xff\xd8':
-        return 'image/jpeg'
-    if data[:6] in (b'GIF87a', b'GIF89a'):
-        return 'image/gif'
-    if data[:4] == b'RIFF' and data[8:12] == b'WEBP':
-        return 'image/webp'
+    if data[:4] == b"\x89PNG":
+        return "image/png"
+    if data[:2] == b"\xff\xd8":
+        return "image/jpeg"
+    if data[:6] in (b"GIF87a", b"GIF89a"):
+        return "image/gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
     return None
 
 

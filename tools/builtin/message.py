@@ -39,8 +39,13 @@ class FeishuMessageTool(ToolBase):
         "required": ["action"],
     }
 
-    def __init__(self, app_id: str = "", app_secret: str = "", domain: str = "feishu",
-                 token_manager: FeishuTokenManager | None = None):
+    def __init__(
+        self,
+        app_id: str = "",
+        app_secret: str = "",
+        domain: str = "feishu",
+        token_manager: FeishuTokenManager | None = None,
+    ):
         self._app_id = app_id
         self._app_secret = app_secret
         self._domain = domain
@@ -52,19 +57,22 @@ class FeishuMessageTool(ToolBase):
             if action == "send_text":
                 return await self._send_text(ctx.chat_id, args.get("content", ""))
             elif action == "send_markdown":
-                return await self._send_text(ctx.chat_id, args.get("content", ""),
-                                            msg_type="interactive")
+                return await self._send_text(
+                    ctx.chat_id, args.get("content", ""), msg_type="interactive"
+                )
             elif action == "add_reaction":
-                return await self._add_reaction(ctx.chat_id, ctx.message_id,
-                                                args.get("emoji", "THUMBSUP"))
+                return await self._add_reaction(
+                    ctx.chat_id, ctx.message_id, args.get("emoji", "THUMBSUP")
+                )
             return tool_result(f"Unknown action: {action}")
         except Exception as e:
             return tool_result(f"Feishu API error: {e}")
 
-    async def _send_text(self, chat_id: str, content: str,
-                         msg_type: str = "text") -> str:
+    async def _send_text(self, chat_id: str, content: str, msg_type: str = "text") -> str:
         token = await self._token.get_token()
-        base = "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        base = (
+            "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        )
 
         if msg_type == "interactive":
             card = {
@@ -79,21 +87,27 @@ class FeishuMessageTool(ToolBase):
             resp = await client.post(
                 f"{base}/open-apis/im/v1/messages/{chat_id}/reply",
                 headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-                json=body, timeout=10.0,
+                json=body,
+                timeout=10.0,
             )
             data = resp.json()
             if data.get("code") == 0:
-                return tool_result("Message sent", message_id=data.get("data", {}).get("message_id", ""))
+                return tool_result(
+                    "Message sent", message_id=data.get("data", {}).get("message_id", "")
+                )
             return tool_result(f"Send failed: {data.get('msg')}")
 
     async def _add_reaction(self, chat_id: str, message_id: str, emoji: str) -> str:
         token = await self._token.get_token()
-        base = "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        base = (
+            "https://open.feishu.cn" if self._domain == "feishu" else "https://open.larksuite.com"
+        )
         async with httpx.AsyncClient() as client:
             resp = await client.post(
                 f"{base}/open-apis/im/v1/messages/{message_id}/reactions",
                 headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
-                json={"reaction_type": {"emoji_type": emoji}}, timeout=10.0,
+                json={"reaction_type": {"emoji_type": emoji}},
+                timeout=10.0,
             )
             data = resp.json()
             if data.get("code") == 0:

@@ -2,8 +2,9 @@
 
 import pytest
 from pydantic import ValidationError
-from config.schema import LLMConfig, FeishuConfig, SwarmConfig
-from config.loader import _resolve_env_vars, load_config
+
+from config.loader import _resolve_env_vars
+from config.schema import FeishuConfig, LLMConfig, SwarmConfig
 
 
 class TestLLMConfig:
@@ -33,6 +34,7 @@ class TestFeishuConfig:
 class TestEnvVarResolution:
     def test_resolves_simple_var(self):
         import os
+
         os.environ["TEST_VAR"] = "resolved_value"
         result = _resolve_env_vars({"key": "${TEST_VAR}"})
         assert result["key"] == "resolved_value"
@@ -43,6 +45,7 @@ class TestEnvVarResolution:
 
     def test_recursive_resolution(self):
         import os
+
         os.environ["NESTED"] = "inner"
         result = _resolve_env_vars({"a": {"b": "${NESTED}"}})
         assert result["a"]["b"] == "inner"

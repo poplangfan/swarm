@@ -19,6 +19,7 @@ class PluginState(Enum):
 @dataclass
 class PluginManifest:
     """A plugin manifest describing capabilities, install steps, and permissions."""
+
     name: str
     version: str = "0.1.0"
     description: str = ""

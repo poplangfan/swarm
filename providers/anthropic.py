@@ -13,12 +13,15 @@ Features:
 
 from __future__ import annotations
 
-import base64
 import json
 from typing import Any, AsyncIterator
 
+import structlog
+
 from providers.base import LLMProvider, LLMResponse, StreamChunk
 from providers.retry import RetryConfig, async_retry
+
+logger = structlog.get_logger(__name__)
 
 
 class AnthropicProvider(LLMProvider):
@@ -83,7 +86,8 @@ class AnthropicProvider(LLMProvider):
     # ── Message / Tool Conversion (shared by chat + stream) ──────
 
     def _convert_messages(
-        self, messages: list[dict[str, Any]],
+        self,
+        messages: list[dict[str, Any]],
     ) -> tuple[str, list[dict[str, Any]]]:
         """Convert OpenAI-format messages to Anthropic format.
 
@@ -99,7 +103,8 @@ class AnthropicProvider(LLMProvider):
                 system_prompt = content if isinstance(content, str) else str(content)
             elif role == "user":
                 anthropic_messages.append(
-                    {"role": "user", "content": self._convert_content(content)})
+                    {"role": "user", "content": self._convert_content(content)}
+                )
             elif role == "assistant":
                 text = content if isinstance(content, str) else (content or "")
                 if "tool_calls" in msg:
@@ -114,25 +119,31 @@ class AnthropicProvider(LLMProvider):
                                 args = json.loads(args)
                             except json.JSONDecodeError:
                                 pass
-                        blocks.append({
-                            "type": "tool_use",
-                            "id": tc["id"],
-                            "name": tc["function"]["name"],
-                            "input": args,
-                        })
+                        blocks.append(
+                            {
+                                "type": "tool_use",
+                                "id": tc["id"],
+                                "name": tc["function"]["name"],
+                                "input": args,
+                            }
+                        )
                     anthropic_messages.append({"role": "assistant", "content": blocks})
                 else:
                     anthropic_messages.append({"role": "assistant", "content": text})
             elif role == "tool":
                 # Use Anthropic native tool_result content block (#3)
-                anthropic_messages.append({
-                    "role": "user",
-                    "content": [{
-                        "type": "tool_result",
-                        "tool_use_id": msg.get("tool_call_id", ""),
-                        "content": content,
-                    }],
-                })
+                anthropic_messages.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": msg.get("tool_call_id", ""),
+                                "content": content,
+                            }
+                        ],
+                    }
+                )
         return system_prompt, anthropic_messages
 
     @staticmethod
@@ -196,26 +207,29 @@ class AnthropicProvider(LLMProvider):
             if block.type == "text":
                 text_content += block.text
             elif block.type == "tool_use":
-                tool_calls.append({
-                    "id": block.id,
-                    "function": {
-                        "name": block.name,
-                        "arguments": (
-                            block.input if isinstance(block.input, str)
-                            else self._serialize_json(block.input)
-                        ),
-                    },
-                })
+                tool_calls.append(
+                    {
+                        "id": block.id,
+                        "function": {
+                            "name": block.name,
+                            "arguments": (
+                                block.input
+                                if isinstance(block.input, str)
+                                else self._serialize_json(block.input)
+                            ),
+                        },
+                    }
+                )
 
         # Extract usage
-        if hasattr(response, 'usage') and response.usage:
+        if hasattr(response, "usage") and response.usage:
             usage_dict = {
-                "input_tokens": getattr(response.usage, 'input_tokens', 0),
-                "output_tokens": getattr(response.usage, 'output_tokens', 0),
+                "input_tokens": getattr(response.usage, "input_tokens", 0),
+                "output_tokens": getattr(response.usage, "output_tokens", 0),
             }
 
         # Check stop reason
-        stop_reason = getattr(response, 'stop_reason', 'end_turn')
+        stop_reason = getattr(response, "stop_reason", "end_turn")
         if tool_calls:
             stop_reason = "tool_calls"
 
@@ -257,11 +271,13 @@ class AnthropicProvider(LLMProvider):
                 # ── Content block start (tool_use name + id) ──
                 if event.type == "content_block_start":
                     if event.content_block.type == "tool_use":
-                        yield StreamChunk(tool_call_delta={
-                            "index": event.index,
-                            "id": event.content_block.id,
-                            "function": {"name": event.content_block.name},
-                        })
+                        yield StreamChunk(
+                            tool_call_delta={
+                                "index": event.index,
+                                "id": event.content_block.id,
+                                "function": {"name": event.content_block.name},
+                            }
+                        )
 
                 # ── Content block delta (text or tool args) ──
                 elif event.type == "content_block_delta":
@@ -269,19 +285,21 @@ class AnthropicProvider(LLMProvider):
                     if delta.type == "text_delta":
                         yield StreamChunk(content=delta.text)
                     elif delta.type == "input_json_delta":
-                        yield StreamChunk(tool_call_delta={
-                            "index": event.index,
-                            "function": {"arguments": delta.partial_json},
-                        })
+                        yield StreamChunk(
+                            tool_call_delta={
+                                "index": event.index,
+                                "function": {"arguments": delta.partial_json},
+                            }
+                        )
 
                 # ── Message delta (stop_reason + usage) ──
                 elif event.type == "message_delta":
                     finish_reason = event.delta.stop_reason or "end_turn"
                     usage_dict = {}
-                    if hasattr(event, 'usage') and event.usage:
+                    if hasattr(event, "usage") and event.usage:
                         usage_dict = {
-                            "input_tokens": getattr(event.usage, 'input_tokens', 0),
-                            "output_tokens": getattr(event.usage, 'output_tokens', 0),
+                            "input_tokens": getattr(event.usage, "input_tokens", 0),
+                            "output_tokens": getattr(event.usage, "output_tokens", 0),
                         }
                     yield StreamChunk(finish_reason=finish_reason, usage=usage_dict)
 
@@ -301,17 +319,20 @@ class AnthropicProvider(LLMProvider):
                             try:
                                 media_type = url.split(";")[0].replace("data:", "")
                                 b64_data = url.split(",", 1)[1]
-                                blocks.append({
-                                    "type": "image",
-                                    "source": {
-                                        "type": "base64",
-                                        "media_type": media_type,
-                                        "data": b64_data,
-                                    },
-                                })
+                                blocks.append(
+                                    {
+                                        "type": "image",
+                                        "source": {
+                                            "type": "base64",
+                                            "media_type": media_type,
+                                            "data": b64_data,
+                                        },
+                                    }
+                                )
                             except (IndexError, ValueError):
-                                logger.debug("image_data_uri_parse_failed",
-                                           url_preview=str(url)[:80])
+                                logger.debug(
+                                    "image_data_uri_parse_failed", url_preview=str(url)[:80]
+                                )
             return blocks if blocks else str(content)
         return str(content)
 

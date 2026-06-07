@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import asyncio
-from http.server import HTTPServer, BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
 import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import parse_qs, urlparse
 
 import structlog
 
@@ -78,8 +78,10 @@ class OAuthCallbackServer:
                         server_ref._code = code
                         server_ref._state = state
                         server_ref._received_event.set()
-                        self._send_response(200,
-                            "Authorization successful! You can close this window and return to Feishu.")
+                        self._send_response(
+                            200,
+                            "Authorization successful! You can close this window and return to Feishu.",
+                        )
                     else:
                         self._send_response(400, "Missing authorization code")
                 else:

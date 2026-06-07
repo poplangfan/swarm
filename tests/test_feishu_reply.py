@@ -1,8 +1,9 @@
 """Tests for Feishu reply builder — card types, reactions, helpers."""
 
-import json
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+
 from gateway.feishu_reply import FeishuReply
 
 
@@ -44,10 +45,11 @@ class TestFeishuReply:
     @pytest.mark.asyncio
     async def test_send_text(self):
         reply = FeishuReply(
-            app_id="test_app", app_secret="test_secret",
+            app_id="test_app",
+            app_secret="test_secret",
         )
-        with patch.object(reply._token, 'get_token', return_value="mock_token"):
-            with patch.object(reply, '_post') as mock_post:
+        with patch.object(reply._token, "get_token", return_value="mock_token"):
+            with patch.object(reply, "_post") as mock_post:
                 mock_post.return_value = {
                     "code": 0,
                     "data": {"message_id": "msg_001"},
@@ -58,23 +60,23 @@ class TestFeishuReply:
     @pytest.mark.asyncio
     async def test_send_markdown_card(self):
         reply = FeishuReply(
-            app_id="test_app", app_secret="test_secret",
+            app_id="test_app",
+            app_secret="test_secret",
         )
-        with patch.object(reply._token, 'get_token', return_value="mock_token"):
-            with patch.object(reply, '_post') as mock_post:
+        with patch.object(reply._token, "get_token", return_value="mock_token"):
+            with patch.object(reply, "_post") as mock_post:
                 mock_post.return_value = {
                     "code": 0,
                     "data": {"message_id": "msg_card_001"},
                 }
-                msg_id = await reply.send_markdown_card(
-                    "oc_test", "**Bold** text", title="Test"
-                )
+                msg_id = await reply.send_markdown_card("oc_test", "**Bold** text", title="Test")
                 assert msg_id == "msg_card_001"
 
     @pytest.mark.asyncio
     async def test_send_card_with_actions(self):
         reply = FeishuReply(
-            app_id="test_app", app_secret="test_secret",
+            app_id="test_app",
+            app_secret="test_secret",
         )
         actions = [
             {
@@ -84,24 +86,27 @@ class TestFeishuReply:
                 "value": {"action": "approve"},
             },
         ]
-        with patch.object(reply._token, 'get_token', return_value="mock_token"):
-            with patch.object(reply, '_post') as mock_post:
+        with patch.object(reply._token, "get_token", return_value="mock_token"):
+            with patch.object(reply, "_post") as mock_post:
                 mock_post.return_value = {
                     "code": 0,
                     "data": {"message_id": "msg_action_001"},
                 }
                 msg_id = await reply.send_card_with_actions(
-                    "oc_test", "Please review", actions=actions,
+                    "oc_test",
+                    "Please review",
+                    actions=actions,
                 )
                 assert msg_id == "msg_action_001"
 
     @pytest.mark.asyncio
     async def test_send_error_card(self):
         reply = FeishuReply(
-            app_id="test_app", app_secret="test_secret",
+            app_id="test_app",
+            app_secret="test_secret",
         )
-        with patch.object(reply._token, 'get_token', return_value="mock_token"):
-            with patch.object(reply, '_post') as mock_post:
+        with patch.object(reply._token, "get_token", return_value="mock_token"):
+            with patch.object(reply, "_post") as mock_post:
                 mock_post.return_value = {
                     "code": 0,
                     "data": {"message_id": "msg_err"},
@@ -112,10 +117,11 @@ class TestFeishuReply:
     @pytest.mark.asyncio
     async def test_add_reaction(self):
         reply = FeishuReply(
-            app_id="test_app", app_secret="test_secret",
+            app_id="test_app",
+            app_secret="test_secret",
         )
-        with patch.object(reply._token, 'get_token', return_value="mock_token"):
-            with patch.object(reply, '_post') as mock_post:
+        with patch.object(reply._token, "get_token", return_value="mock_token"):
+            with patch.object(reply, "_post") as mock_post:
                 mock_post.return_value = {"code": 0}
                 ok = await reply.add_reaction("msg_001", "THUMBSUP")
                 assert ok is True
@@ -123,10 +129,11 @@ class TestFeishuReply:
     @pytest.mark.asyncio
     async def test_add_reaction_failure(self):
         reply = FeishuReply(
-            app_id="test_app", app_secret="test_secret",
+            app_id="test_app",
+            app_secret="test_secret",
         )
-        with patch.object(reply._token, 'get_token', return_value="mock_token"):
-            with patch.object(reply, '_post') as mock_post:
+        with patch.object(reply._token, "get_token", return_value="mock_token"):
+            with patch.object(reply, "_post") as mock_post:
                 mock_post.return_value = {"code": 999, "msg": "error"}
                 ok = await reply.add_reaction("msg_001", "THUMBSUP")
                 assert ok is False
@@ -134,10 +141,11 @@ class TestFeishuReply:
     @pytest.mark.asyncio
     async def test_send_failure_returns_none(self):
         reply = FeishuReply(
-            app_id="test_app", app_secret="test_secret",
+            app_id="test_app",
+            app_secret="test_secret",
         )
-        with patch.object(reply._token, 'get_token', return_value="mock_token"):
-            with patch.object(reply, '_post') as mock_post:
+        with patch.object(reply._token, "get_token", return_value="mock_token"):
+            with patch.object(reply, "_post") as mock_post:
                 mock_post.return_value = {"code": 999, "msg": "API error"}
                 msg_id = await reply.send_text("oc_test", "hello")
                 assert msg_id is None
@@ -145,10 +153,11 @@ class TestFeishuReply:
     @pytest.mark.asyncio
     async def test_update_card(self):
         reply = FeishuReply(
-            app_id="test_app", app_secret="test_secret",
+            app_id="test_app",
+            app_secret="test_secret",
         )
-        with patch.object(reply._token, 'get_token', return_value="mock_token"):
-            with patch.object(reply, '_patch') as mock_patch:
+        with patch.object(reply._token, "get_token", return_value="mock_token"):
+            with patch.object(reply, "_patch") as mock_patch:
                 mock_patch.return_value = {"code": 0}
                 ok = await reply.update_card("msg_001", "Updated content")
                 assert ok is True

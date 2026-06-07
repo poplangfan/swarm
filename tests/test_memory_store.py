@@ -1,10 +1,12 @@
 """Deep tests for memory store — ChromaDB operations, isolation, edge cases."""
 
-import pytest
 import tempfile
 from pathlib import Path
-from memory.store import ChromaMemoryStore
+
+import pytest
+
 from memory.short_term import ShortTermMemory
+from memory.store import ChromaMemoryStore
 
 
 class TestChromaMemoryStore:
@@ -12,10 +14,15 @@ class TestChromaMemoryStore:
         with tempfile.TemporaryDirectory() as tmpdir:
             store = ChromaMemoryStore(tmpdir)
             import asyncio
-            ok = asyncio.run(store.add(
-                "chat_test", "user_1", "Alice works at Acme Corp",
-                importance=0.9,
-            ))
+
+            ok = asyncio.run(
+                store.add(
+                    "chat_test",
+                    "user_1",
+                    "Alice works at Acme Corp",
+                    importance=0.9,
+                )
+            )
             assert ok is True or ok is False  # May fail without sentence-transformers
 
     def test_collection_naming(self):
@@ -109,8 +116,9 @@ class TestShortTermMemory:
             await store.add("chat_B", "user_2", "keep this")
 
             import time
+
             time.sleep(0.1)
-            removed = await store.cleanup("chat_A", ttl_seconds=0.01)
-            remaining_a = await store.get_recent("chat_A", limit=100)
+            _ = await store.cleanup("chat_A", ttl_seconds=0.01)
+            _ = await store.get_recent("chat_A", limit=100)
             remaining_b = await store.get_recent("chat_B", limit=100)
             assert len(remaining_b) == 1

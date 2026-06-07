@@ -28,8 +28,14 @@ class FeishuOAuth:
         "lark": "https://open.larksuite.com",
     }
 
-    def __init__(self, app_id: str, app_secret: str, redirect_uri: str,
-                 token_store: TokenStore, domain: str = "feishu"):
+    def __init__(
+        self,
+        app_id: str,
+        app_secret: str,
+        redirect_uri: str,
+        token_store: TokenStore,
+        domain: str = "feishu",
+    ):
         self._app_id = app_id
         self._app_secret = app_secret
         self._redirect_uri = redirect_uri
@@ -70,8 +76,7 @@ class FeishuOAuth:
             )
             data = resp.json()
             if data.get("code") != 0:
-                logger.error("oauth_code_exchange_failed",
-                             error=data.get("msg", "unknown"))
+                logger.error("oauth_code_exchange_failed", error=data.get("msg", "unknown"))
                 return None
 
             token_data = data.get("data", {})
@@ -104,8 +109,9 @@ class FeishuOAuth:
             )
             data = resp.json()
             if data.get("code") != 0:
-                logger.error("token_refresh_failed", user_id=user_id,
-                             error=data.get("msg", "unknown"))
+                logger.error(
+                    "token_refresh_failed", user_id=user_id, error=data.get("msg", "unknown")
+                )
                 return None
 
             token_data = data.get("data", {})

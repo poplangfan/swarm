@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from pathlib import Path
 
 from prompt_toolkit import PromptSession
@@ -16,15 +15,14 @@ from agent.loop import AgentLoop
 from bus.queue import MessageBus
 from providers.base import LLMProvider
 from session.manager import SessionManager
-from tools.registry import ToolRegistry
 from tools.discovery import load_all_tools
+from tools.registry import ToolRegistry
 
 
 class InteractiveChat:
     """Interactive chat interface for Swarm."""
 
-    def __init__(self, provider: LLMProvider, session_name: str = "default",
-                 config=None):
+    def __init__(self, provider: LLMProvider, session_name: str = "default", config=None):
         self.provider = provider
         self.session_name = session_name
         self.config = config
@@ -34,13 +32,16 @@ class InteractiveChat:
         self.tools = ToolRegistry()
         load_all_tools(self.tools)
         self.loop = AgentLoop(
-            bus=self.bus, provider=provider,
+            bus=self.bus,
+            provider=provider,
             workspace=Path.home() / ".swarm",
-            sessions=self.sessions, tools=self.tools,
+            sessions=self.sessions,
+            tools=self.tools,
         )
 
     async def run(self) -> None:
         from swarm import __logo__
+
         self.console.print(__logo__, style="bold yellow")
         self.console.print(f"Swarm Chat — session: {self.session_name}")
         self.console.print("Type /help for commands, /exit to quit\n")
@@ -74,7 +75,10 @@ class InteractiveChat:
 
             self.console.print(" " * 30, end="\r")
             if result and result.content:
-                self.console.print(Panel(
-                    Markdown(result.content), title="Swarm",
-                    border_style="yellow",
-                ))
+                self.console.print(
+                    Panel(
+                        Markdown(result.content),
+                        title="Swarm",
+                        border_style="yellow",
+                    )
+                )

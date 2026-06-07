@@ -1,6 +1,5 @@
 """Detailed tests for context compressor."""
 
-import pytest
 from memory.compressor import ContextCompressor
 
 
