@@ -8,7 +8,14 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from version import __logo__, __version__
+__version__ = "0.1.1"
+__logo__ = r"""
+   _____
+  / ___/      __  ______ ___  ____ ___  ___
+  \__ \| | /| / / / __ `__ \/ __ `__ \/ _ \
+ ___/ /| |/ |/ / / / / / / / / / / / /  __/
+/____/ |__/|__/ /_/ /_/ /_/_/ /_/ /_/\___/
+"""
 
 app = typer.Typer(name="swarm", help="Swarm — Feishu AI Agent Framework")
 console = Console()

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "swarm-agent"
-version = "0.1.0"
+version = "0.1.1"
 description = "Lightweight, concurrency-safe, multi-tenant Feishu AI Agent framework"
 readme = "README.md"
 license = {text = "MIT"}
@@ -73,6 +73,6 @@ packages = [
     "agent", "auth", "bus", "cli", "config", "cron", "delivery",
     "events", "gateway", "logging_", "mcp", "memory", "plugins",
     "providers", "session", "skills", "state", "tools", "utils",
-    "version",
+    
 ]
 force-include = { "skills_builtin" = "swarm_skills_builtin" }
