@@ -1,0 +1,30 @@
+services:
+  swarm:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: swarm-bot
+    restart: unless-stopped
+    volumes:
+      - ../config.yaml:/app/config.yaml:ro
+      - swarm_data:/app/data
+    environment:
+      - LLM_API_KEY=${LLM_API_KEY}
+      - FEISHU_APP_ID=${FEISHU_APP_ID}
+      - FEISHU_APP_SECRET=${FEISHU_APP_SECRET}
+      - TOKEN_ENCRYPT_KEY=${TOKEN_ENCRYPT_KEY}
+      - SWARM_CONFIG=/app/config.yaml
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    network_mode: bridge
+
+volumes:
+  swarm_data:
+    driver: local
+
+networks:
+  default:
+    name: swarm-network

@@ -1,0 +1,45 @@
+# Bytecode
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Build
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Configuration (contains secrets)
+config.yaml
+
+# Data directories
+data/
+*.db
+*.db-journal
+*.db-wal
+
+# Logs
+*.log
+*.log.gz
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+
+# Misc
+*.swp
+*.swo
+*~

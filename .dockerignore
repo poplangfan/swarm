@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# Git
+.git/
+
+# IDE
+.vscode/
+.idea/
+
+# Reference projects (large)
+_ref/
+
+# Test/output artifacts
+.pytest_cache/
+htmlcov/
+*.zip
+
+# Config (mounted at runtime)
+config.yaml
+
+# Data directories
+data/

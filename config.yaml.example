@@ -1,0 +1,130 @@
+# =============================================================================
+# Swarm Configuration
+# =============================================================================
+# Copy this file to config.yaml and fill in your values.
+# All ${ENV_VAR} placeholders are resolved from environment variables at startup.
+# =============================================================================
+
+# ── LLM Provider ─────────────────────────────────────────────────────────────
+llm:
+  # Provider type: "openai", "anthropic", or "custom"
+  provider: "anthropic"
+
+  # API base URL
+  # DeepSeek: https://api.deepseek.com/anthropic
+  # OpenAI:   https://api.openai.com/v1
+  # Ollama:   http://localhost:11434/v1
+  base_url: "https://api.deepseek.com/anthropic"
+
+  # API key — use ${ENV_VAR} to avoid hardcoding secrets
+  api_key: "${LLM_API_KEY}"
+
+  # Model identifier
+  model: "deepseek-v4-pro"
+
+  # Max tokens per response
+  max_tokens: 4096
+
+  # Temperature (0.0 = deterministic, 1.0 = creative)
+  temperature: 0.7
+
+  # Optional fallback chain (tried in order on failure)
+  # fallback:
+  #   - provider: "openai"
+  #     api_key: "${FALLBACK_OPENAI_KEY}"
+  #     model: "gpt-4o-mini"
+
+# ── Feishu Platform ──────────────────────────────────────────────────────────
+feishu:
+  # Application credentials from Feishu Open Platform
+  app_id: "${FEISHU_APP_ID}"
+  app_secret: "${FEISHU_APP_SECRET}"
+
+  # Domain: "feishu" (China) or "lark" (International)
+  domain: "feishu"
+
+  # Enable CardKit streaming output
+  streaming: true
+
+  # Group chat response policy: "mention" (only when @mentioned) or "open"
+  group_policy: "mention"
+
+  # Separate session per group thread/topic
+  topic_isolation: true
+
+# ── User Authorization (OAuth) ───────────────────────────────────────────────
+auth:
+  # Enable user-level OAuth authorization
+  enabled: true
+
+  # OAuth callback URL — LAN IP or localhost works (redirect happens in user's browser)
+  redirect_uri: "http://localhost:9876/oauth/callback"
+
+  # Encryption key for token storage (≥32 characters recommended)
+  # Generate: python -c "import secrets; print(secrets.token_hex(16))"
+  token_encrypt_key: "${TOKEN_ENCRYPT_KEY}"
+
+  # Requested permission scopes
+  scopes:
+    - "im:message"
+
+# ── Memory System ────────────────────────────────────────────────────────────
+memory:
+  # ChromaDB persistence directory
+  chroma_path: "./data/chroma"
+
+  # Short-term message retention (days)
+  short_term_ttl_days: 7
+
+  # Messages before Dream memory consolidation triggers
+  consolidation_threshold: 20
+
+  # Max tokens for LLM context window
+  max_context_tokens: 32000
+
+  # Model used for memory extraction (cheaper model recommended)
+  dream_model: "gpt-4o-mini"
+
+# ── Cron Jobs ────────────────────────────────────────────────────────────────
+cron:
+  jobs:
+    memory_consolidation:
+      interval_minutes: 30
+    soul_evolution:
+      interval_minutes: 240
+
+# ── Logging ──────────────────────────────────────────────────────────────────
+logging:
+  # Minimum log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  level: "INFO"
+
+  # JSON format for structured logging
+  json_format: true
+
+  # Log file directory
+  log_dir: "./data/logs"
+
+  # Retention period (days)
+  retention_days: 30
+
+  # Gzip compress rotated logs
+  compress: true
+
+  # Separate audit log for compliance
+  audit_enabled: true
+
+  # Separate error log file
+  error_separate: true
+
+# ── Tools ────────────────────────────────────────────────────────────────────
+tools:
+  web_search:
+    enabled: true
+    provider: "duckduckgo"
+
+  subagent:
+    max_concurrent: 3
+    timeout_seconds: 300
+
+  sandbox:
+    enabled: false
