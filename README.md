@@ -66,7 +66,7 @@ swarm chat
 └── skills/           # 自定义技能
 ```
 
-> 也可以从 PyPI 安装：`pip install swarm-agent && swarm init`（不含源码，仅 CLI + 数据目录）
+> 也可以从 PyPI 安装：`pip install swarm-agent && swarm init`
 
 ```yaml
 # config.yaml
@@ -241,7 +241,7 @@ swarm chat
 
 After setup, `~/.swarm/` contains both full source code and all data.
 
-> Also available via PyPI: `pip install swarm-agent && swarm init` (CLI-only, no source code)
+> Also available via PyPI: `pip install swarm-agent && swarm init`
 
 ```yaml
 # config.yaml
