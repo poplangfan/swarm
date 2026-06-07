@@ -8,7 +8,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __logo__ = r"""
    _____
   / ___/      __  ______ ___  ____ ___  ___
@@ -76,7 +76,7 @@ def ws(
     setup_logging(
         level=config.logging.level,
         json_format=config.logging.json_format,
-        log_dir=config.logging.log_dir,
+        log_dir=str(Path(config.logging.log_dir).expanduser()),
         retention_days=config.logging.retention_days,
         compress=config.logging.compress,
         audit_enabled=config.logging.audit_enabled,
@@ -92,7 +92,7 @@ def ws(
     console.print(f"[dim]Loaded {count} tools[/dim]")
 
     sessions = SessionManager(data_dir)
-    memory = ChromaMemoryStore(config.memory.chroma_path)
+    memory = ChromaMemoryStore(Path(config.memory.chroma_path).expanduser())
 
     loop = AgentLoop(
         bus=bus,
@@ -157,9 +157,11 @@ def init() -> None:
     """Interactive configuration wizard."""
     console.print(__logo__, style="bold yellow")
     console.print("Swarm Initialization Wizard\n")
-    config_path = Path.cwd() / "config.yaml"
+    swarm_home = Path.home() / ".swarm"
+    swarm_home.mkdir(parents=True, exist_ok=True)
+    config_path = swarm_home / "config.yaml"
     if config_path.exists():
-        overwrite = typer.confirm("config.yaml already exists. Overwrite?")
+        overwrite = typer.confirm(f"{config_path} already exists. Overwrite?")
         if not overwrite:
             console.print("[yellow]Aborted.[/yellow]")
             return
@@ -177,7 +179,7 @@ feishu:
 logging:
   level: "INFO"
   json_format: true
-  log_dir: "./data/logs"
+  log_dir: "~/.swarm/logs"
 """
     config_path.write_text(example)
     console.print(f"[green]Created {config_path}[/green]")

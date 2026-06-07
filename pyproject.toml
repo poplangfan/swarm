@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "swarm-agent"
-version = "0.1.1"
+version = "0.1.2"
 description = "Lightweight, concurrency-safe, multi-tenant Feishu AI Agent framework"
 readme = "README.md"
 license = {text = "MIT"}

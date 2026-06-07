@@ -44,7 +44,7 @@ class AuthConfig(BaseModel):
 class MemoryConfig(BaseModel):
     """Memory system configuration."""
 
-    chroma_path: str = "./data/chroma"
+    chroma_path: str = "~/.swarm/chroma"
     short_term_ttl_days: int = Field(default=7, ge=1)
     consolidation_threshold: int = Field(default=20, ge=5)
     max_context_tokens: int = Field(default=32000, ge=1024)
@@ -73,7 +73,7 @@ class LoggingConfig(BaseModel):
 
     level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     json_format: bool = True
-    log_dir: str = "./data/logs"
+    log_dir: str = "~/.swarm/logs"
     retention_days: int = Field(default=30, ge=1)
     compress: bool = True
     audit_enabled: bool = True
