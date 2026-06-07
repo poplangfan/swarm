@@ -8,7 +8,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 __logo__ = r"""
    _____
   / ___/      __  ______ ___  ____ ___  ___
@@ -159,6 +159,9 @@ def init() -> None:
     console.print("Swarm Initialization Wizard\n")
     swarm_home = Path.home() / ".swarm"
     swarm_home.mkdir(parents=True, exist_ok=True)
+    # Create standard subdirectories
+    for subdir in ["chroma", "logs", "skills"]:
+        (swarm_home / subdir).mkdir(parents=True, exist_ok=True)
     config_path = swarm_home / "config.yaml"
     if config_path.exists():
         overwrite = typer.confirm(f"{config_path} already exists. Overwrite?")
