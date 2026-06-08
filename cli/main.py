@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from pathlib import Path
+from typing import Optional
 
 import typer
 from rich.console import Console
@@ -31,7 +32,7 @@ def version() -> None:
 @app.command()
 def chat(
     session: str = typer.Option("default", "--session", "-s"),
-    config_path: str = typer.Option("config.yaml", "--config", "-c"),
+    config_path: Optional[str] = typer.Option(None, "--config", "-c"),
 ) -> None:
     """Start interactive chat mode."""
     from config.loader import load_config
@@ -53,12 +54,15 @@ def chat(
 
 @app.command()
 def ws(
-    config_path: str = typer.Option("config.yaml", "--config", "-c"),
+    config_path: Optional[str] = typer.Option(None, "--config", "-c"),
 ) -> None:
     """Start Feishu WebSocket mode."""
+    import structlog
+
     from agent.loop import AgentLoop
-    from bus.queue import MessageBus
+    from bus.queue import MessageBus, OutboundMessage
     from config.loader import load_config
+    from gateway.feishu_reply import FeishuReply
     from gateway.feishu_ws import FeishuWebSocket
     from logging_.setup import setup_logging
     from memory.store import ChromaMemoryStore
@@ -66,6 +70,8 @@ def ws(
     from session.manager import SessionManager
     from tools.discovery import load_all_tools
     from tools.registry import ToolRegistry
+
+    ws_logger = structlog.get_logger("swarm.ws")
 
     try:
         config = load_config(config_path)
@@ -111,11 +117,42 @@ def ws(
         group_policy=config.feishu.group_policy,
     )
 
+    feishu_reply = FeishuReply(
+        app_id=config.feishu.app_id,
+        app_secret=config.feishu.app_secret,
+        domain=config.feishu.domain,
+    )
+
     async def run_all():
         import signal
 
         loop_task = asyncio.create_task(loop.run())
         ws_task = asyncio.create_task(feishu.start())
+
+        async def outbound_sender():
+            """Consume outbound messages from the bus and send via Feishu API."""
+            while True:
+                try:
+                    msg: OutboundMessage = await bus.consume_outbound()
+                except asyncio.CancelledError:
+                    break
+                try:
+                    reply_to_id = msg.metadata.get("message_id") if msg.metadata else None
+                    result = await feishu_reply.send_text(
+                        msg.chat_id, msg.content, reply_to=reply_to_id
+                    )
+                    ws_logger.info(
+                        "outbound_sent", chat_id=msg.chat_id, message_id=result
+                    )
+                except Exception as e:
+                    ws_logger.error(
+                        "outbound_send_failed",
+                        chat_id=msg.chat_id,
+                        error=str(e),
+                    )
+
+        sender_task = asyncio.create_task(outbound_sender())
+
         stop_event = asyncio.Event()
 
         def _signal_handler():
@@ -126,7 +163,7 @@ def ws(
 
         # Wait for stop signal or task failure
         done, pending = await asyncio.wait(
-            [loop_task, ws_task],
+            [loop_task, ws_task, sender_task],
             return_when=asyncio.FIRST_COMPLETED,
         )
         # Check for task exceptions
@@ -142,7 +179,7 @@ def ws(
         console.print("[yellow]Shutting down...[/yellow]")
         await loop.shutdown(timeout=10.0)
         await feishu.stop()
-        for task in [loop_task, ws_task]:
+        for task in [loop_task, ws_task, sender_task]:
             if not task.done():
                 task.cancel()
 
@@ -193,7 +230,7 @@ logging:
 
 @app.command()
 def validate(
-    config_path: str = typer.Option("config.yaml", "--config", "-c"),
+    config_path: Optional[str] = typer.Option(None, "--config", "-c"),
 ) -> None:
     """Validate a configuration file."""
     from config.loader import load_config

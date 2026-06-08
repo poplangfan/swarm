@@ -40,7 +40,7 @@ class InteractiveChat:
         )
 
     async def run(self) -> None:
-        from swarm import __logo__
+        from cli.main import __logo__
 
         self.console.print(__logo__, style="bold yellow")
         self.console.print(f"Swarm Chat — session: {self.session_name}")

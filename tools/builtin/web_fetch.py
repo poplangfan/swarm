@@ -3,11 +3,22 @@
 from __future__ import annotations
 
 import re
+from urllib.parse import urlparse
 
 import httpx
 
 from agent.context import RequestContext
 from tools.base import ToolBase, tool_result
+
+# Domains that require Feishu OAuth to access content
+_FEISHU_AUTH_DOMAINS = {
+    "horizonrobotics.feishu.cn",
+    "feishu.cn",
+    "larksuite.com",
+}
+
+# Path prefixes that indicate Feishu document/wiki/bitable content
+_FEISHU_DOC_PREFIXES = ("/wiki/", "/docs/", "/base/", "/sheet/", "/mindnotes/")
 
 
 class WebFetchTool(ToolBase):
@@ -45,6 +56,40 @@ class WebFetchTool(ToolBase):
         if not url.startswith(("http://", "https://")):
             return tool_result(f"Invalid URL: {url}")
 
+        # Detect Feishu document URLs that require OAuth
+        if self._is_feishu_doc_url(url):
+            if not ctx.user_token:
+                return tool_result(
+                    "This Feishu document requires user authorization. "
+                    "Please tell the user to authorize Feishu access first. "
+                    "The bot should guide the user by saying: "
+                    '"To access Feishu documents, you need to authorize first. '
+                    "Please use the /auth command or visit the authorization link I'll provide. "
+                    'After authorizing, try the request again."'
+                )
+
+            # Use user token to fetch Feishu doc content
+            try:
+                resp = await self._get_client().get(
+                    url,
+                    headers={"Authorization": f"Bearer {ctx.user_token}"},
+                )
+                if resp.status_code == 401:
+                    return tool_result(
+                        "Feishu authorization expired. "
+                        "Please tell the user to re-authorize Feishu access."
+                    )
+                if resp.status_code != 200:
+                    return tool_result(f"Feishu API error: HTTP {resp.status_code}")
+            except Exception as e:
+                return tool_result(f"Feishu fetch error: {e}")
+
+            text = self._extract_text(resp.text)
+            if len(text) > max_chars:
+                text = text[:max_chars] + "\n\n... [truncated]"
+            title = self._extract_title(resp.text) or url
+            return tool_result(f"Fetched Feishu doc: {title}", content=text)
+
         try:
             resp = await self._get_client().get(url)
             if resp.status_code != 200:
@@ -64,6 +109,20 @@ class WebFetchTool(ToolBase):
             return tool_result(f"Timeout fetching {url}")
         except Exception as e:
             return tool_result(f"Fetch error: {e}")
+
+    @staticmethod
+    def _is_feishu_doc_url(url: str) -> bool:
+        """Check if a URL points to a Feishu document/wiki/bitable that needs OAuth."""
+        try:
+            parsed = urlparse(url)
+            hostname = parsed.hostname or ""
+            # Check if any Feishu auth domain matches
+            if not any(hostname == d or hostname.endswith("." + d) for d in _FEISHU_AUTH_DOMAINS):
+                return False
+            # Check if path indicates a document/wiki/bitable
+            return parsed.path.startswith(_FEISHU_DOC_PREFIXES)
+        except Exception:
+            return False
 
     def _extract_text(self, html: str) -> str:
         """Extract readable text from HTML."""

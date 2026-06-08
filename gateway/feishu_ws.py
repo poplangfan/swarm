@@ -13,6 +13,7 @@ Production-grade WebSocket client with:
 from __future__ import annotations
 
 import asyncio
+import threading
 import time
 from typing import Any, Callable
 
@@ -93,6 +94,10 @@ class FeishuWebSocket:
         self._reconnect_delay = self.INITIAL_RECONNECT_DELAY
         self._last_event_time = 0.0
 
+        # Thread-bridged event queue
+        self._event_queue: asyncio.Queue[Any] = asyncio.Queue()
+        self._ws_thread: threading.Thread | None = None
+
         # Deduplication
         self._seen_message_ids: dict[str, float] = {}  # msg_id → received_at
         self._last_dedup_cleanup: float = 0.0
@@ -167,26 +172,82 @@ class FeishuWebSocket:
     async def _connect_and_listen(self) -> None:
         """Establish WebSocket connection and process events.
 
-        Uses lark-oapi's WebSocket client which handles:
-        - Authentication (app_id + app_secret)
-        - WebSocket handshake and keep-alive
-        - Event deserialization
+        Uses lark-oapi's WebSocket client with EventDispatcherHandler.
+        The WS client runs in a daemon thread since its start() method is blocking.
+        Events are bridged back to the main event loop via asyncio.Queue.
         """
+        from lark_oapi.core.const import FEISHU_DOMAIN, LARK_DOMAIN
+        from lark_oapi.event.dispatcher_handler import EventDispatcherHandler
         from lark_oapi.ws import Client as WsClient
+
+        main_loop = asyncio.get_running_loop()
+        domain_url = LARK_DOMAIN if self._domain == "lark" else FEISHU_DOMAIN
+
+        # Clear any stale events from previous connection
+        while not self._event_queue.empty():
+            self._event_queue.get_nowait()
+
+        def _on_event(event: Any) -> None:
+            """Sync callback from WS client thread — bridge to main event loop."""
+            try:
+                asyncio.run_coroutine_threadsafe(
+                    self._event_queue.put(event), main_loop
+                )
+            except Exception:
+                pass
+
+        event_handler = (
+            EventDispatcherHandler.builder("", "")
+            .register_p2_im_message_receive_v1(_on_event)
+            .build()
+        )
 
         client = WsClient(
             app_id=self._app_id,
             app_secret=self._app_secret,
-            domain=self._domain,
+            domain=domain_url,
+            event_handler=event_handler,
+            auto_reconnect=False,
         )
 
-        logger.info("feishu_ws_connected")
+        def _run_ws() -> None:
+            """Run the WS client in its own event loop (daemon thread)."""
+            ws_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(ws_loop)
+            import lark_oapi.ws.client as ws_module
+
+            ws_module.loop = ws_loop
+            try:
+                client.start()
+            except Exception as e:
+                if self._running:
+                    logger.warning("ws_thread_exited", error=str(e))
+                # Signal the main loop that WS has disconnected
+                try:
+                    asyncio.run_coroutine_threadsafe(
+                        self._event_queue.put(None), main_loop
+                    )
+                except Exception:
+                    pass
+
+        self._ws_thread = threading.Thread(target=_run_ws, daemon=True)
+        self._ws_thread.start()
+
+        logger.info("feishu_ws_connected", domain=domain_url)
         self._set_healthy(True)
         self._reconnect_delay = self.INITIAL_RECONNECT_DELAY  # Reset on success
         self._last_event_time = time.time()
 
-        async for event in client:
-            if not self._running:
+        # Consume events from the queue until disconnected or stopped
+        while self._running:
+            try:
+                event = await asyncio.wait_for(self._event_queue.get(), timeout=1.0)
+            except asyncio.TimeoutError:
+                continue
+
+            # None sentinel means WS thread exited
+            if event is None:
+                logger.info("feishu_ws_thread_exited")
                 break
 
             self._last_event_time = time.time()
@@ -252,18 +313,25 @@ class FeishuWebSocket:
                 )
 
     async def _process_message_event(self, event: Any) -> None:
-        """Process an im.message.receive_v1 event."""
-        # Extract message data
-        msg_data = self._extract_event_data(event)
-        message = msg_data.get("message", {})
-        if not message:
+        """Process an im.message.receive_v1 event.
+
+        Handles both dict-based events (legacy) and P2ImMessageReceiveV1 SDK objects.
+        """
+        # Extract event data — SDK P2 object
+        event_data = getattr(event, "event", None)
+        if event_data is None:
             return
 
-        msg_type = message.get("message_type", "text")
-        content = message.get("content", "{}")
-        msg_id = message.get("message_id", "")
-        chat_id = message.get("chat_id", "")
-        chat_type = message.get("chat_type", "p2p")
+        # Message object from SDK — use getattr for SDK objects
+        message = getattr(event_data, "message", None)
+        if message is None:
+            return
+
+        msg_type = getattr(message, "message_type", "text") or "text"
+        content = getattr(message, "content", "{}") or "{}"
+        msg_id = getattr(message, "message_id", "") or ""
+        chat_id = getattr(message, "chat_id", "") or ""
+        chat_type = getattr(message, "chat_type", "p2p") or "p2p"
 
         # Deduplicate
         if msg_id:
@@ -274,12 +342,17 @@ class FeishuWebSocket:
             self._cleanup_dedup_cache()
 
         # Extract sender
-        sender = msg_data.get("sender", {})
-        sender_id = sender.get("sender_id", {})
-        if isinstance(sender_id, dict):
-            sender_id = sender_id.get("open_id", "")
-        elif not isinstance(sender_id, str):
-            sender_id = str(sender_id)
+        sender = getattr(event_data, "sender", None)
+        sender_id = ""
+        if sender is not None:
+            sender_id_obj = getattr(sender, "sender_id", None)
+            if sender_id_obj is not None:
+                if hasattr(sender_id_obj, "open_id"):
+                    sender_id = sender_id_obj.open_id or ""
+                elif isinstance(sender_id_obj, dict):
+                    sender_id = sender_id_obj.get("open_id", "")
+                elif isinstance(sender_id_obj, str):
+                    sender_id = sender_id_obj
 
         # Parse message content
         text, images = parse_message_content(msg_type, content)
@@ -290,10 +363,13 @@ class FeishuWebSocket:
 
         # Check group policy
         if chat_type == "group":
-            if not self._should_process_group_message(message, msg_data):
+            if not self._should_process_group_message(message, msg_data=event_data):
                 return
 
         # Build and publish inbound message
+        root_id = getattr(message, "root_id", "") or ""
+        parent_id = getattr(message, "parent_id", "") or ""
+
         inbound = InboundMessage(
             channel="feishu",
             sender_id=str(sender_id),
@@ -304,8 +380,8 @@ class FeishuWebSocket:
                 "message_id": str(msg_id),
                 "chat_type": str(chat_type),
                 "msg_type": msg_type,
-                "root_id": message.get("root_id", ""),
-                "parent_id": message.get("parent_id", ""),
+                "root_id": root_id,
+                "parent_id": parent_id,
             },
         )
 
@@ -323,35 +399,42 @@ class FeishuWebSocket:
 
     @staticmethod
     def _get_event_type(event: Any) -> str:
-        """Extract event type from various event formats."""
+        """Extract event type from SDK event object.
+
+        For P2 events, the event type is in the header:
+            event.header.event_type → "im.message.receive_v1"
+        """
+        # P2 event: check header.event_type first
+        header = getattr(event, "header", None)
+        if header is not None:
+            event_type = getattr(header, "event_type", None)
+            if event_type:
+                return str(event_type)
+
+        # Fallback: check event.type for v1 events
         if hasattr(event, "type"):
             return str(event.type)
+
+        # Dict fallback
         if isinstance(event, dict):
             return event.get("type", event.get("schema", ""))
+
         return str(event)
 
-    @staticmethod
-    def _extract_event_data(event: Any) -> dict:
-        """Extract the event data payload from various formats."""
-        if hasattr(event, "event"):
-            return event.event or {}
-        if isinstance(event, dict):
-            return event.get("event", event)
-        return {}
-
-    def _should_process_group_message(self, message: dict, msg_data: dict) -> bool:
+    def _should_process_group_message(self, message: Any, msg_data: Any) -> bool:
         """Check group message policy: mention-only or open."""
         # Open policy: process all group messages
         if self._group_policy == "open":
             return True
 
         # Mention policy (default): only if @mentioned
-        mentions = message.get("mentions", [])
+        mentions = getattr(message, "mentions", None)
         if mentions:
             return True
 
         # Check if this is a reply to the bot's message
-        if message.get("parent_id"):
+        parent_id = getattr(message, "parent_id", None)
+        if parent_id:
             return True
 
         return False

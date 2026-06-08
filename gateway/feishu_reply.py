@@ -61,12 +61,25 @@ class FeishuReply:
     async def send_text(
         self, chat_id: str, content: str, reply_to: str | None = None
     ) -> str | None:
-        """Send a plain text message as a reply."""
+        """Send a plain text message.
+
+        If reply_to is provided, sends as a reply to that message.
+        Otherwise, sends as a new message to the chat.
+        """
         body: dict[str, Any] = {
             "msg_type": "text",
             "content": json.dumps({"text": content}),
         }
-        data = await self._post(f"/open-apis/im/v1/messages/{chat_id}/reply", body)
+
+        if reply_to:
+            # Reply to a specific message in thread
+            path = f"/open-apis/im/v1/messages/{reply_to}/reply"
+        else:
+            # Send as new message to chat
+            path = f"/open-apis/im/v1/messages?receive_id_type=chat_id"
+            body["receive_id"] = chat_id
+
+        data = await self._post(path, body)
         if data.get("code") != 0:
             logger.error("send_text_failed", error=data.get("msg"), chat_id=chat_id)
             return None
