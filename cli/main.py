@@ -9,7 +9,7 @@ from typing import Optional
 import typer
 from rich.console import Console
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __logo__ = r"""
    _____
   / ___/      __  ______ ___  ____ ___  ___
