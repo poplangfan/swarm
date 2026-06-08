@@ -76,7 +76,7 @@ class FeishuReply:
             path = f"/open-apis/im/v1/messages/{reply_to}/reply"
         else:
             # Send as new message to chat
-            path = f"/open-apis/im/v1/messages?receive_id_type=chat_id"
+            path = "/open-apis/im/v1/messages?receive_id_type=chat_id"
             body["receive_id"] = chat_id
 
         data = await self._post(path, body)
