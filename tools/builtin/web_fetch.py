@@ -56,12 +56,43 @@ class WebFetchTool(ToolBase):
 
         if self._is_feishu_doc_url(url):
             if not ctx.user_token:
+                # Build auth URL using env vars (no TokenStore needed for URL generation)
+                auth_url = ""
+                try:
+                    import os
+                    from urllib.parse import urlencode
+
+                    app_id = os.environ.get("FEISHU_APP_ID", "")
+                    domain = os.environ.get("FEISHU_DOMAIN", "feishu")
+                    base = (
+                        "https://open.feishu.cn"
+                        if domain == "feishu"
+                        else "https://open.larksuite.com"
+                    )
+                    if app_id:
+                        params = {
+                            "app_id": app_id,
+                            "redirect_uri": "http://localhost:9876/oauth/callback",
+                            "state": ctx.user_id,
+                        }
+                        auth_url = f"{base}/open-apis/authen/v1/authorize?{urlencode(params)}"
+                except Exception:
+                    pass
+
                 return tool_result_json(
                     error="Feishu authorization required",
                     result=(
                         "This Feishu document requires user authorization. "
-                        "Please tell the user to authorize Feishu access first."
+                        "Please tell the user to authorize Feishu access."
                     ),
+                    data={
+                        "auth_required": True,
+                        "auth_url": auth_url,
+                        "instructions": (
+                            "Click the authorization link to grant access, "
+                            "then try the request again."
+                        ),
+                    },
                 )
             try:
                 resp = await self._get_client().get(

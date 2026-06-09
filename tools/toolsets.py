@@ -25,8 +25,8 @@ TOOLSETS: dict[str, dict] = {
         "tools": ["feishu_message"],
     },
     "feishu": {
-        "description": "Feishu platform tools: files, docs, drives",
-        "tools": ["feishu_file"],
+        "description": "Feishu platform tools: files, docs, drives, auth",
+        "tools": ["feishu_file", "feishu_auth"],
     },
     "cron": {
         "description": "Scheduled task management",
