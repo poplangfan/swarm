@@ -141,9 +141,7 @@ def ws(
                     result = await feishu_reply.send_text(
                         msg.chat_id, msg.content, reply_to=reply_to_id
                     )
-                    ws_logger.info(
-                        "outbound_sent", chat_id=msg.chat_id, message_id=result
-                    )
+                    ws_logger.info("outbound_sent", chat_id=msg.chat_id, message_id=result)
                 except Exception as e:
                     ws_logger.error(
                         "outbound_send_failed",

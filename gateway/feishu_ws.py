@@ -112,9 +112,7 @@ class FeishuWebSocket:
         # Event handlers (direct handlers + FeishuEventDispatcher)
         self._event_handlers: dict[str, list[Callable]] = {}
         self._wildcard_handlers: list[Callable] = []
-        self._event_dispatcher = FeishuEventDispatcher(
-            app_id=app_id, app_secret=app_secret
-        )
+        self._event_dispatcher = FeishuEventDispatcher(app_id=app_id, app_secret=app_secret)
 
     # ── Lifecycle ────────────────────────────────────────────
 
@@ -192,9 +190,7 @@ class FeishuWebSocket:
         def _on_event(event: Any) -> None:
             """Sync callback from WS client thread — bridge to main event loop."""
             try:
-                asyncio.run_coroutine_threadsafe(
-                    self._event_queue.put(event), main_loop
-                )
+                asyncio.run_coroutine_threadsafe(self._event_queue.put(event), main_loop)
             except Exception:
                 pass
 
@@ -226,9 +222,7 @@ class FeishuWebSocket:
                     logger.warning("ws_thread_exited", error=str(e))
                 # Signal the main loop that WS has disconnected
                 try:
-                    asyncio.run_coroutine_threadsafe(
-                        self._event_queue.put(None), main_loop
-                    )
+                    asyncio.run_coroutine_threadsafe(self._event_queue.put(None), main_loop)
                 except Exception:
                     pass
 
@@ -502,8 +496,6 @@ class FeishuWebSocket:
             "reconnect_delay": self._reconnect_delay,
             "uptime_seconds": int(uptime),
             "seconds_since_last_event": (
-                int(time.time() - self._last_event_time)
-                if self._last_event_time
-                else -1
+                int(time.time() - self._last_event_time) if self._last_event_time else -1
             ),
         }

@@ -1,4 +1,8 @@
-"""Tool auto-discovery — pkgutil scanning + setuptools entry-points."""
+"""Tool auto-discovery — pkgutil scanning + setuptools entry-points.
+
+Hermes pattern: tools register themselves at import time via `registry.register()`.
+Discovery scans for ToolBase subclasses and registers them with toolset metadata.
+"""
 
 from __future__ import annotations
 
@@ -63,21 +67,31 @@ def discover_entry_point_tools(group: str = "swarm.plugins") -> list[ToolBase]:
 
 
 def load_all_tools(registry: ToolRegistry) -> int:
-    """Discover and register all tools (builtin + entry-points). Returns count."""
+    """Discover and register all tools (builtin + entry-points).
+
+    Uses the new registry.register() API with toolset metadata from
+    each ToolBase's `toolset` attribute and `check_requirements()` classmethod.
+    """
     count = 0
+
     for tool_cls in discover_builtin_tools():
         try:
-            registry.register(tool_cls())
+            tool = tool_cls()
+            # Use the new registry API with toolset metadata
+            registry.register_tool(tool)
             count += 1
         except (ValueError, Exception) as e:
             logger.warning("tool_load_skip", tool=tool_cls.__name__, error=str(e))
 
     for tool in discover_entry_point_tools():
         try:
-            registry.register(tool)
+            registry.register_tool(tool)
             count += 1
         except (ValueError, Exception) as e:
             logger.warning("plugin_tool_load_skip", tool=tool.name, error=str(e))
 
-    logger.info("tools_loaded", count=count)
+    from tools.toolsets import DEFAULT_TOOLSETS
+
+    registry.enable_toolsets(DEFAULT_TOOLSETS)
+    logger.info("tools_loaded", count=count, toolsets=list(DEFAULT_TOOLSETS))
     return count

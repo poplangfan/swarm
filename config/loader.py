@@ -53,8 +53,8 @@ def load_config(path: str | Path | None = None) -> SwarmConfig:
         config_path = Path(env_path)
     else:
         candidates = [
-            Path.home() / ".swarm" / "config.yaml",
             Path.cwd() / "config.yaml",
+            Path.home() / ".swarm" / "config.yaml",
         ]
         for p in candidates:
             if p.exists():

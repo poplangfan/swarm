@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 120" width="500" height="120">
+  <defs>
+    <linearGradient id="core" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="nodeGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#c4b5fd"/>
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#6366f1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Logo mark (centered at x=60,y=60) -->
+  <g transform="translate(60,60) scale(0.6)">
+    <!-- connection mesh -->
+    <g stroke="#334155" stroke-width="1.2" fill="none" opacity="0.4">
+      <line x1="120" y1="30" x2="160" y2="50"/><line x1="160" y1="50" x2="190" y2="85"/>
+      <line x1="190" y1="85" x2="200" y2="130"/><line x1="200" y1="130" x2="190" y2="175"/>
+      <line x1="190" y1="175" x2="160" y2="205"/><line x1="160" y1="205" x2="120" y2="215"/>
+      <line x1="120" y1="215" x2="80" y2="205"/><line x1="80" y1="205" x2="50" y2="175"/>
+      <line x1="50" y1="175" x2="40" y2="130"/><line x1="40" y1="130" x2="50" y2="85"/>
+      <line x1="50" y1="85" x2="80" y2="50"/><line x1="80" y1="50" x2="120" y2="30"/>
+      <line x1="120" y1="120" x2="120" y2="30"/><line x1="120" y1="120" x2="160" y2="50"/>
+      <line x1="120" y1="120" x2="190" y2="85"/><line x1="120" y1="120" x2="200" y2="130"/>
+      <line x1="120" y1="120" x2="190" y2="175"/><line x1="120" y1="120" x2="160" y2="205"/>
+      <line x1="120" y1="120" x2="120" y2="215"/><line x1="120" y1="120" x2="80" y2="205"/>
+      <line x1="120" y1="120" x2="50" y2="175"/><line x1="120" y1="120" x2="40" y2="130"/>
+      <line x1="120" y1="120" x2="50" y2="85"/><line x1="120" y1="120" x2="80" y2="50"/>
+    </g>
+    <!-- ring 1 nodes -->
+    <circle cx="120" cy="65" r="7" fill="url(#nodeGrad)" opacity="0.4"/>
+    <circle cx="155" cy="80" r="7" fill="url(#nodeGrad)" opacity="0.4"/>
+    <circle cx="175" cy="110" r="7" fill="url(#nodeGrad)" opacity="0.4"/>
+    <circle cx="180" cy="145" r="7" fill="url(#nodeGrad)" opacity="0.4"/>
+    <circle cx="165" cy="175" r="7" fill="url(#nodeGrad)" opacity="0.4"/>
+    <circle cx="130" cy="188" r="7" fill="url(#nodeGrad)" opacity="0.4"/>
+    <circle cx="95" cy="185" r="7" fill="url(#nodeGrad)" opacity="0.35"/>
+    <circle cx="68" cy="165" r="7" fill="url(#nodeGrad)" opacity="0.35"/>
+    <circle cx="55" cy="135" r="7" fill="url(#nodeGrad)" opacity="0.35"/>
+    <circle cx="62" cy="100" r="7" fill="url(#nodeGrad)" opacity="0.35"/>
+    <circle cx="82" cy="75" r="7" fill="url(#nodeGrad)" opacity="0.35"/>
+    <circle cx="105" cy="62" r="7" fill="url(#nodeGrad)" opacity="0.35"/>
+    <!-- ring 2 nodes -->
+    <circle cx="120" cy="30" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <circle cx="160" cy="50" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <circle cx="190" cy="85" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <circle cx="200" cy="130" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <circle cx="190" cy="175" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <circle cx="160" cy="205" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <circle cx="120" cy="215" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <circle cx="80" cy="205" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <circle cx="50" cy="175" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <circle cx="40" cy="130" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <circle cx="50" cy="85" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <circle cx="80" cy="50" r="5" fill="url(#nodeGrad)" opacity="0.2"/>
+    <!-- center hex -->
+    <g transform="translate(120,120)">
+      <polygon points="0,-38 33,-19 33,19 0,38 -33,19 -33,-19" fill="none" stroke="#6366f1" stroke-width="1" opacity="0.3"/>
+      <polygon points="0,-26 22.5,-13 22.5,13 0,26 -22.5,13 -22.5,-13" fill="none" stroke="url(#core)" stroke-width="2.5"/>
+      <polygon points="0,-16 13.9,-8 13.9,8 0,16 -13.9,8 -13.9,-8" fill="url(#core)" opacity="0.85"/>
+      <circle r="4" fill="#f8fafc"/>
+    </g>
+    <circle cx="120" cy="120" r="45" fill="none" stroke="#6366f1" stroke-width="0.5" opacity="0.15"/>
+    <circle cx="120" cy="120" r="65" fill="none" stroke="#6366f1" stroke-width="0.3" opacity="0.08"/>
+  </g>
+
+  <!-- Text: SWARM -->
+  <text x="140" y="68" font-family="'Inter','SF Pro Display',-apple-system,sans-serif" font-size="40" font-weight="700" fill="url(#textGrad)" letter-spacing="4">SWARM</text>
+  <!-- Tagline -->
+  <text x="143" y="88" font-family="'Inter','SF Pro Display',-apple-system,sans-serif" font-size="13" fill="#475569" font-weight="400" letter-spacing="6">FEISHU AI AGENT</text>
+</svg>

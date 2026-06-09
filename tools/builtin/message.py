@@ -9,7 +9,7 @@ import structlog
 
 from agent.context import RequestContext
 from gateway.feishu_token import FeishuTokenManager
-from tools.base import ToolBase, tool_result
+from tools.base import ToolBase, tool_result_json
 
 logger = structlog.get_logger(__name__)
 
@@ -19,6 +19,7 @@ class FeishuMessageTool(ToolBase):
 
     name = "feishu_message"
     description = "Send messages or add reactions in a Feishu conversation"
+    toolset = "messaging"
     parameters = {
         "type": "object",
         "properties": {
@@ -38,6 +39,15 @@ class FeishuMessageTool(ToolBase):
         },
         "required": ["action"],
     }
+
+    @classmethod
+    def check_requirements(cls) -> bool:
+        """Feishu message tool requires app credentials at runtime."""
+        return True  # Checked at construction time
+
+    @classmethod
+    def required_env_vars(cls) -> list[str]:
+        return ["FEISHU_APP_ID", "FEISHU_APP_SECRET"]
 
     def __init__(
         self,
@@ -64,9 +74,9 @@ class FeishuMessageTool(ToolBase):
                 return await self._add_reaction(
                     ctx.chat_id, ctx.message_id, args.get("emoji", "THUMBSUP")
                 )
-            return tool_result(f"Unknown action: {action}")
+            return tool_result_json(error=f"Unknown action: {action}")
         except Exception as e:
-            return tool_result(f"Feishu API error: {e}")
+            return tool_result_json(error=f"Feishu API error: {e}")
 
     async def _send_text(self, chat_id: str, content: str, msg_type: str = "text") -> str:
         token = await self._token.get_token()
@@ -86,16 +96,20 @@ class FeishuMessageTool(ToolBase):
         async with httpx.AsyncClient() as client:
             resp = await client.post(
                 f"{base}/open-apis/im/v1/messages/{chat_id}/reply",
-                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
                 json=body,
                 timeout=10.0,
             )
             data = resp.json()
             if data.get("code") == 0:
-                return tool_result(
-                    "Message sent", message_id=data.get("data", {}).get("message_id", "")
+                return tool_result_json(
+                    result="Message sent",
+                    message_id=data.get("data", {}).get("message_id", ""),
                 )
-            return tool_result(f"Send failed: {data.get('msg')}")
+            return tool_result_json(error=f"Send failed: {data.get('msg')}")
 
     async def _add_reaction(self, chat_id: str, message_id: str, emoji: str) -> str:
         token = await self._token.get_token()
@@ -105,11 +119,14 @@ class FeishuMessageTool(ToolBase):
         async with httpx.AsyncClient() as client:
             resp = await client.post(
                 f"{base}/open-apis/im/v1/messages/{message_id}/reactions",
-                headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
                 json={"reaction_type": {"emoji_type": emoji}},
                 timeout=10.0,
             )
             data = resp.json()
             if data.get("code") == 0:
-                return tool_result(f"Reaction {emoji} added")
-            return tool_result(f"Reaction failed: {data.get('msg')}")
+                return tool_result_json(result=f"Reaction {emoji} added")
+            return tool_result_json(error=f"Reaction failed: {data.get('msg')}")

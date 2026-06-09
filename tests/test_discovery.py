@@ -2,7 +2,7 @@
 
 from tools.base import ToolBase
 from tools.discovery import discover_builtin_tools, load_all_tools
-from tools.registry import ToolRegistry
+from tools.registry import ToolDef, ToolRegistry
 
 
 class TestDiscovery:
@@ -22,10 +22,14 @@ class TestDiscovery:
         reg = ToolRegistry()
         load_all_tools(reg)
         for name in reg.tool_names:
-            tool = reg.get(name)
-            assert tool is not None
-            assert isinstance(tool, ToolBase)
-            assert tool.name == name
+            tool_def = reg.get(name)
+            assert tool_def is not None
+            assert isinstance(tool_def, ToolDef)
+            assert tool_def.name == name
+            # Verify the underlying ToolBase instance is accessible
+            assert tool_def.instance is not None
+            assert isinstance(tool_def.instance, ToolBase)
+            assert tool_def.instance.name == name
 
     def test_discover_nonexistent_package(self):
         tools = discover_builtin_tools("tools.nonexistent")

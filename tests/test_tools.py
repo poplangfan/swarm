@@ -34,6 +34,7 @@ class TestToolRegistry:
 
     def test_get_definitions_with_ctx(self, sample_ctx):
         reg = ToolRegistry()
+        reg.enable_toolsets({"core"})
         reg.register(EchoTool())
         defs = reg.get_definitions(sample_ctx)
         assert len(defs) == 1

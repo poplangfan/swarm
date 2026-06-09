@@ -20,13 +20,13 @@ class SwarmMCPServer:
         """List all tools exposed by this MCP server."""
         tools = []
         for name in self._registry.tool_names:
-            tool = self._registry.get(name)
-            if tool:
+            tool_def = self._registry.get(name)
+            if tool_def:
                 tools.append(
                     {
-                        "name": tool.name,
-                        "description": tool.description,
-                        "inputSchema": tool.parameters,
+                        "name": tool_def.name,
+                        "description": tool_def.description,
+                        "inputSchema": tool_def.schema.get("parameters", tool_def.schema),
                     }
                 )
         return tools

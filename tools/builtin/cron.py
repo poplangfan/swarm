@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from agent.context import RequestContext
-from tools.base import ToolBase, tool_result
+from tools.base import ToolBase, tool_result_json
 
 
 class CronTool(ToolBase):
     name = "cron_manage"
     description = "Create, list, or delete scheduled tasks and reminders"
+    toolset = "cron"
     parameters = {
         "type": "object",
         "properties": {
@@ -45,15 +46,19 @@ class CronTool(ToolBase):
             if self._scheduler:
                 jobs = self._scheduler.list_jobs()
                 if not jobs:
-                    return tool_result("No scheduled tasks")
-                lines = [f"- {j['id']}: {j.get('type', 'unknown')}" for j in jobs]
-                return tool_result(f"Scheduled tasks ({len(jobs)}):", tasks="\n".join(lines))
+                    return tool_result_json(result="No scheduled tasks", data=[])
+                return tool_result_json(
+                    result=f"Scheduled tasks ({len(jobs)})",
+                    data=[{"id": j["id"], "type": j.get("type", "unknown")} for j in jobs],
+                )
             else:
                 reminders = list(self._reminders.values())
                 if not reminders:
-                    return tool_result("No reminders scheduled")
-                lines = [f"- {r['id']}: {r['description']}" for r in reminders]
-                return tool_result(f"Reminders ({len(reminders)}):", tasks="\n".join(lines))
+                    return tool_result_json(result="No reminders scheduled", data=[])
+                return tool_result_json(
+                    result=f"Reminders ({len(reminders)})",
+                    data=reminders,
+                )
 
         elif action == "create_reminder":
             desc = args.get("description", "Reminder")
@@ -66,27 +71,26 @@ class CronTool(ToolBase):
                 "minutes": minutes,
                 "chat_id": ctx.chat_id,
             }
-
-            # Schedule via CronScheduler if available
             if self._scheduler:
                 self._scheduler.add_interval_job(
                     job_id=job_id,
-                    func=lambda: None,  # Placeholder — real impl would send message
+                    func=lambda: None,
                     minutes=minutes,
                 )
-
-            return tool_result(f"Reminder created: '{desc}' in {minutes} minutes", job_id=job_id)
+            return tool_result_json(
+                result=f"Reminder created: '{desc}' in {minutes} minutes",
+                job_id=job_id,
+            )
 
         elif action == "delete":
             job_id = args.get("job_id", "")
             if not job_id:
-                return tool_result("Missing job_id for delete")
-            if self._scheduler:
-                if self._scheduler.remove_job(job_id):
-                    return tool_result(f"Deleted: {job_id}")
+                return tool_result_json(error="Missing job_id for delete")
+            if self._scheduler and self._scheduler.remove_job(job_id):
+                return tool_result_json(result=f"Deleted: {job_id}")
             if job_id in self._reminders:
                 del self._reminders[job_id]
-                return tool_result(f"Deleted reminder: {job_id}")
-            return tool_result(f"Job not found: {job_id}")
+                return tool_result_json(result=f"Deleted reminder: {job_id}")
+            return tool_result_json(error=f"Job not found: {job_id}")
 
-        return tool_result(f"Unknown cron action: {action}")
+        return tool_result_json(error=f"Unknown cron action: {action}")

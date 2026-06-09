@@ -6,12 +6,13 @@ import httpx
 
 from agent.context import RequestContext
 from gateway.feishu_token import FeishuTokenManager
-from tools.base import ToolBase, tool_result
+from tools.base import ToolBase, tool_result_json
 
 
 class FeishuFileTool(ToolBase):
     name = "feishu_file"
     description = "List and manage files in Feishu Drives and Docs"
+    toolset = "feishu"
     parameters = {
         "type": "object",
         "properties": {
@@ -28,6 +29,14 @@ class FeishuFileTool(ToolBase):
         },
         "required": ["action"],
     }
+
+    @classmethod
+    def check_requirements(cls) -> bool:
+        return True
+
+    @classmethod
+    def required_env_vars(cls) -> list[str]:
+        return ["FEISHU_APP_ID", "FEISHU_APP_SECRET"]
 
     def __init__(
         self,
@@ -50,7 +59,6 @@ class FeishuFileTool(ToolBase):
     async def _user_action(self, action: str, args: dict, ctx: RequestContext) -> str:
         page_size = min(int(args.get("page_size", 10)), 50)
         if action == "list":
-            token = ctx.user_token
             base = (
                 "https://open.feishu.cn"
                 if self._domain == "feishu"
@@ -60,29 +68,33 @@ class FeishuFileTool(ToolBase):
                 async with httpx.AsyncClient() as client:
                     resp = await client.get(
                         f"{base}/open-apis/drive/v1/files",
-                        headers={"Authorization": f"Bearer {token}"},
+                        headers={"Authorization": f"Bearer {ctx.user_token}"},
                         params={"page_size": page_size},
                         timeout=10.0,
                     )
                     data = resp.json()
                     if data.get("code") != 0:
-                        return tool_result(f"Drive API error: {data.get('msg')}")
+                        return tool_result_json(error=f"Drive API error: {data.get('msg')}")
                     files = data.get("data", {}).get("files", [])
-                    lines = [
-                        f"{f.get('name', 'unknown')} ({f.get('type', 'file')})"
+                    file_list = [
+                        {
+                            "name": f.get("name", "unknown"),
+                            "type": f.get("type", "file"),
+                        }
                         for f in files[:page_size]
                     ]
-                    return tool_result(
-                        f"Found {len(files)} files", files="\n".join(lines) if lines else "No files"
+                    return tool_result_json(
+                        result=f"Found {len(files)} files",
+                        data=file_list,
                     )
             except Exception as e:
-                return tool_result(f"Drive API error: {e}")
-        return tool_result(f"Action '{action}' requires user authorization")
+                return tool_result_json(error=f"Drive API error: {e}")
+        return tool_result_json(error=f"Action '{action}' requires user authorization")
 
     async def _app_action(self, action: str, args: dict) -> str:
         if action == "list":
-            return tool_result(
-                "File listing requires user OAuth authorization. "
-                "Please authorize the app to access your files."
+            return tool_result_json(
+                error="File listing requires user OAuth authorization.",
+                result="Please authorize the app to access your files.",
             )
-        return tool_result(f"Action '{action}' not available without user authorization")
+        return tool_result_json(error=f"Action '{action}' not available without user authorization")
