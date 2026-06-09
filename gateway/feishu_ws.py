@@ -112,7 +112,9 @@ class FeishuWebSocket:
         # Event handlers (direct handlers + FeishuEventDispatcher)
         self._event_handlers: dict[str, list[Callable]] = {}
         self._wildcard_handlers: list[Callable] = []
-        self._event_dispatcher = FeishuEventDispatcher(app_id=app_id, app_secret=app_secret)
+        self._event_dispatcher = FeishuEventDispatcher(
+            app_id=app_id, app_secret=app_secret
+        )
 
     # ── Lifecycle ────────────────────────────────────────────
 
@@ -500,6 +502,8 @@ class FeishuWebSocket:
             "reconnect_delay": self._reconnect_delay,
             "uptime_seconds": int(uptime),
             "seconds_since_last_event": (
-                int(time.time() - self._last_event_time) if self._last_event_time else -1
+                int(time.time() - self._last_event_time)
+                if self._last_event_time
+                else -1
             ),
         }
