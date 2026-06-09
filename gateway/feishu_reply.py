@@ -86,25 +86,37 @@ class FeishuReply:
         return data.get("data", {}).get("message_id")
 
     async def send_markdown_card(
-        self, chat_id: str, content: str, title: str = "Swarm", color: str = "blue"
+        self,
+        chat_id: str,
+        content: str,
+        title: str = "Swarm",
+        color: str = "blue",
+        reply_to: str | None = None,
     ) -> str | None:
         """Send a message as an interactive card with markdown content.
 
         Colors: blue, wathet, turquoise, green, yellow, orange, red, purple
+        If reply_to is provided, sends as a reply to that message.
         """
-        card = {
+        card: dict[str, Any] = {
             "config": {"wide_screen_mode": True},
-            "header": {
-                "title": {"tag": "plain_text", "content": title},
-                "template": color,
-            },
             "elements": [{"tag": "markdown", "content": content}],
         }
-        body = {
+        if title:
+            card["header"] = {
+                "title": {"tag": "plain_text", "content": title},
+                "template": color,
+            }
+        body: dict[str, Any] = {
             "msg_type": "interactive",
             "content": json.dumps(card),
         }
-        data = await self._post(f"/open-apis/im/v1/messages/{chat_id}/reply", body)
+        if reply_to:
+            path = f"/open-apis/im/v1/messages/{reply_to}/reply"
+        else:
+            path = "/open-apis/im/v1/messages?receive_id_type=chat_id"
+            body["receive_id"] = chat_id
+        data = await self._post(path, body)
         if data.get("code") != 0:
             logger.error("send_card_failed", error=data.get("msg"))
             return None

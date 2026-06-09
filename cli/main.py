@@ -138,8 +138,8 @@ def ws(
                     break
                 try:
                     reply_to_id = msg.metadata.get("message_id") if msg.metadata else None
-                    result = await feishu_reply.send_text(
-                        msg.chat_id, msg.content, reply_to=reply_to_id
+                    result = await feishu_reply.send_markdown_card(
+                        msg.chat_id, msg.content, title="", reply_to=reply_to_id
                     )
                     ws_logger.info("outbound_sent", chat_id=msg.chat_id, message_id=result)
                 except Exception as e:
